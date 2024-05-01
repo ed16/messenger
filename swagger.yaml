@@ -1,0 +1,451 @@
+openapi: 3.0.0
+info:
+  title: Messaging Service API
+  description: "API for a messaging microservice, supporting personal and group chats\
+    \ along with media file handling."
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/EZAYNULLIN/messenger/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: https://api.messagingapp.com/v1
+  description: Main production server
+security:
+- bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      tags:
+      - Authentication
+      summary: Authenticate a user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth_login_body'
+        required: true
+      responses:
+        "200":
+          description: "Successfully authenticated, token returned"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: Authentication failed
+  /users/register:
+    post:
+      tags:
+      - Users
+      summary: Register a new user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/users_register_body'
+        required: true
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_201'
+  /users/{userId}/contacts:
+    get:
+      tags:
+      - Users
+      summary: Retrieve a user's contacts
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of user contacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/inline_response_200_1'
+                x-content-type: application/json
+    post:
+      tags:
+      - Users
+      summary: Add a new contact
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/userId_contacts_body'
+        required: true
+      responses:
+        "201":
+          description: Contact added successfully
+    delete:
+      tags:
+      - Users
+      summary: Remove a contact
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: contactId
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Contact removed successfully
+  /messages/personal:
+    get:
+      tags:
+      - Messages
+      summary: Retrieve personal messages
+      responses:
+        "200":
+          description: List of received messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/inline_response_200_2'
+                x-content-type: application/json
+    post:
+      tags:
+      - Messages
+      summary: Send a personal message
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/messages_personal_body'
+        required: true
+      responses:
+        "202":
+          description: Message sent successfully
+  /messages/{messageId}/status:
+    get:
+      tags:
+      - Messages
+      summary: Get the status of a specific message
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Message status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_3'
+  /messages/search:
+    get:
+      tags:
+      - Messages
+      summary: Search messages by keyword
+      parameters:
+      - name: query
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/inline_response_200_4'
+                x-content-type: application/json
+  /users/{userId}/profile:
+    patch:
+      tags:
+      - Users
+      summary: Edit user profile details
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/userId_profile_body'
+        required: true
+      responses:
+        "200":
+          description: Profile updated successfully
+  /messages/group:
+    get:
+      tags:
+      - Messages
+      summary: Retrieve messages from a group
+      responses:
+        "200":
+          description: List of group messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/inline_response_200_4'
+                x-content-type: application/json
+    post:
+      tags:
+      - Messages
+      summary: Send a message to a group
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/messages_group_body'
+        required: true
+      responses:
+        "202":
+          description: Message sent to group successfully
+  /messages/{messageId}:
+    delete:
+      tags:
+      - Messages
+      summary: Delete a specific message
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Message deleted successfully
+    patch:
+      tags:
+      - Messages
+      summary: Edit a specific message
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/messages_messageId_body'
+        required: true
+      responses:
+        "200":
+          description: Message edited successfully
+  /messages/media:
+    get:
+      tags:
+      - Messages
+      summary: Retrieve media files
+      responses:
+        "200":
+          description: List of received media files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/inline_response_200_5'
+                x-content-type: application/json
+    post:
+      tags:
+      - Messages
+      summary: Send a media file
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/messages_media_body'
+        required: true
+      responses:
+        "202":
+          description: Media file sent successfully
+components:
+  schemas:
+    messages_group_body:
+      type: object
+      properties:
+        groupId:
+          type: string
+        message:
+          type: string
+    messages_personal_body:
+      type: object
+      properties:
+        receiverId:
+          type: string
+        message:
+          type: string
+    inline_response_200_5:
+      type: object
+      properties:
+        fileId:
+          type: string
+        senderId:
+          type: string
+        fileUrl:
+          type: string
+        timestamp:
+          type: string
+      example:
+        senderId: senderId
+        fileUrl: fileUrl
+        fileId: fileId
+        timestamp: timestamp
+    messages_messageId_body:
+      type: object
+      properties:
+        newMessage:
+          type: string
+    userId_profile_body:
+      type: object
+      properties:
+        name:
+          type: string
+        avatarUrl:
+          type: string
+    messages_media_body:
+      type: object
+      properties:
+        receiverId:
+          type: string
+        file:
+          type: string
+          format: binary
+    inline_response_201:
+      type: object
+      properties:
+        userId:
+          type: string
+        message:
+          type: string
+      example:
+        message: message
+        userId: userId
+    inline_response_200_1:
+      type: object
+      properties:
+        contactId:
+          type: string
+        name:
+          type: string
+      example:
+        contactId: contactId
+        name: name
+    auth_login_body:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    inline_response_200:
+      type: object
+      properties:
+        token:
+          type: string
+      example:
+        token: token
+    users_register_body:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        email:
+          type: string
+    inline_response_200_2:
+      type: object
+      properties:
+        messageId:
+          type: string
+        senderId:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+        status:
+          type: string
+      example:
+        senderId: senderId
+        messageId: messageId
+        message: message
+        timestamp: timestamp
+        status: status
+    inline_response_200_3:
+      type: object
+      properties:
+        status:
+          type: string
+      example:
+        status: status
+    inline_response_200_4:
+      type: object
+      properties:
+        messageId:
+          type: string
+        senderId:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+      example:
+        senderId: senderId
+        messageId: messageId
+        message: message
+        timestamp: timestamp
+    userId_contacts_body:
+      type: object
+      properties:
+        contactId:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
