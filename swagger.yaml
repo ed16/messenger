@@ -1,451 +1,516 @@
 openapi: 3.0.0
 info:
   title: Messaging Service API
-  description: "API for a messaging microservice, supporting personal and group chats\
-    \ along with media file handling."
-  version: 1.0.0
+  description: API for a messaging microservice, supporting personal and group chats along with media file handling.
+  version: 1.0.1
 servers:
-- url: https://virtserver.swaggerhub.com/EZAYNULLIN/messenger/1.0.0
-  description: SwaggerHub API Auto Mocking
-- url: https://api.messagingapp.com/v1
-  description: Main production server
-security:
-- bearerAuth: []
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/EZAYNULLIN/messenger/1.0.1
+  - url: 'https://api.messagingapp.com/v1'
+    description: Main production server
 paths:
   /auth/login:
     post:
-      tags:
-      - Authentication
       summary: Authenticate a user
+      tags:
+        - Authentication
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/auth_login_body'
-        required: true
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
       responses:
-        "200":
-          description: "Successfully authenticated, token returned"
+        '200':
+          description: Successfully authenticated, token returned
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200'
-        "401":
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
           description: Authentication failed
-  /users/register:
+
+  /auth/validate-token:
     post:
+      summary: Validate an authentication token
       tags:
-      - Users
-      summary: Register a new user
+        - Authentication
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/users_register_body'
-        required: true
+              type: object
+              properties:
+                token:
+                  type: string
       responses:
-        "201":
+        '200':
+          description: Token is valid
+        '401':
+          description: Invalid or expired token
+
+  /users/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                email:
+                  type: string
+                  format: email
+      responses:
+        '201':
           description: User registered successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_201'
-  /users/{userId}/contacts:
+                type: object
+                properties:
+                  userId:
+                    type: string
+        '400':
+          description: Invalid request parameters
+          
+  /users/:
     get:
+      summary: Retrieve users based on filter criteria
       tags:
-      - Users
-      summary: Retrieve a user's contacts
+        - Users
       parameters:
-      - name: userId
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
+        - in: query
+          name: email
+          schema:
+            type: string
+            format: email
+          description: Optional email address to filter users by
+        - in: query
+          name: name
+          schema:
+            type: string
+          description: Optional name to filter users by
       responses:
-        "200":
+        '200':
+          description: List of users matching the criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    userId:
+                      type: string
+                    email:
+                      type: string
+                    name:
+                      type: string
+        '404':
+          description: No users found matching the criteria
+        '400':
+          description: Invalid query parameters
+          
+  /users/contacts/id:
+    post:
+      summary: Add a new contact by user ID
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contactUserId:
+                  type: string
+      responses:
+        '201':
+          description: Contact added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contactId:
+                    type: string
+                  message:
+                    type: string
+        '404':
+          description: No user found with provided user ID
+        '400':
+          description: Invalid user ID format
+        '403':
+          description: Unauthorized to add contacts
+
+
+  /users/contacts:
+    get:
+      summary: Retrieve a user's contacts
+      tags:
+        - Users
+      responses:
+        '200':
           description: List of user contacts
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/inline_response_200_1'
-                x-content-type: application/json
-    post:
-      tags:
-      - Users
-      summary: Add a new contact
-      parameters:
-      - name: userId
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/userId_contacts_body'
-        required: true
-      responses:
-        "201":
-          description: Contact added successfully
-    delete:
-      tags:
-      - Users
-      summary: Remove a contact
-      parameters:
-      - name: userId
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      - name: contactId
-        in: query
-        required: true
-        style: form
-        explode: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: Contact removed successfully
-  /messages/personal:
-    get:
-      tags:
-      - Messages
-      summary: Retrieve personal messages
-      responses:
-        "200":
-          description: List of received messages
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/inline_response_200_2'
-                x-content-type: application/json
-    post:
-      tags:
-      - Messages
-      summary: Send a personal message
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/messages_personal_body'
-        required: true
-      responses:
-        "202":
-          description: Message sent successfully
-  /messages/{messageId}/status:
-    get:
-      tags:
-      - Messages
-      summary: Get the status of a specific message
-      parameters:
-      - name: messageId
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Message status retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_3'
-  /messages/search:
-    get:
-      tags:
-      - Messages
-      summary: Search messages by keyword
-      parameters:
-      - name: query
-        in: query
-        required: true
-        style: form
-        explode: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Search results
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/inline_response_200_4'
-                x-content-type: application/json
-  /users/{userId}/profile:
-    patch:
-      tags:
-      - Users
+                  type: object
+                  properties:
+                    contactId:
+                      type: string
+                    name:
+                      type: string
+        '400':
+          description: Invalid request data
+
+  /users/profile:
+    put:
       summary: Edit user profile details
-      parameters:
-      - name: userId
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
+      tags:
+        - Users
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/userId_profile_body'
-        required: true
+              type: object
+              properties:
+                name:
+                  type: string
+                avatarUrl:
+                  type: string
       responses:
-        "200":
+        '200':
           description: Profile updated successfully
-  /messages/group:
+        '400':
+          description: Invalid request data
+          
+  /users/{userId}/profile:
     get:
+      summary: Retrieve a user's profile information
       tags:
-      - Messages
-      summary: Retrieve messages from a group
+        - Users
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+          description: User ID whose profile is being retrieved
       responses:
-        "200":
+        '200':
+          description: Profile information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  name:
+                    type: string
+                  avatarUrl:
+                    type: string
+        '404':
+          description: User not found
+        '400':
+          description: Invalid request data
+
+  /messages/user/{userId}:
+    post:
+      summary: Send a personal message to a user
+      tags:
+        - Messages
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+      responses:
+        '202':
+          description: Message sent successfully
+        '400':
+          description: Invalid request data
+
+  /messages/group/{groupId}:
+    post:
+      summary: Send a message to a group
+      tags:
+        - Messages
+      parameters:
+        - in: path
+          name: groupId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+      responses:
+        '202':
+          description: Message sent to group successfully
+        '400':
+          description: Invalid request data
+
+  /messages/user/:
+    get:
+      summary: Retrieve personal messages between users
+      tags:
+        - Messages
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+          description: User ID of the message recipient
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: Limit the number of results
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: Offset for pagination
+        - in: query
+          name: from_ts
+          schema:
+            type: string
+          description: Start timestamp for filtering messages
+        - in: query
+          name: to_ts
+          schema:
+            type: string
+          description: End timestamp for filtering messages
+      responses:
+        '200':
+          description: List of personal messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    messageId:
+                      type: string
+                    senderId:
+                      type: string
+                    receiverId:
+                      type: string
+                    message:
+                      type: string
+                    timestamp:
+                      type: string
+        '400':
+          description: Invalid request data
+
+  /messages/group/:
+    get:
+      summary: Retrieve messages from a group
+      tags:
+        - Messages
+      parameters:
+        - in: query
+          name: groupId
+          required: true
+          schema:
+            type: string
+          description: Group ID for which messages are retrieved
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: Limit the number of results
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: Offset for pagination
+        - in: query
+          name: from_ts
+          schema:
+            type: string
+          description: Start timestamp for filtering messages
+        - in: query
+          name: to_ts
+          schema:
+            type: string
+          description: End timestamp for filtering messages
+      responses:
+        '200':
           description: List of group messages
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/inline_response_200_4'
-                x-content-type: application/json
+                  type: object
+                  properties:
+                    messageId:
+                      type: string
+                    senderId:
+                      type: string
+                    message:
+                      type: string
+                    timestamp:
+                      type: string
+        '400':
+          description: Invalid request parameters
+          
+  /messages/user/{userId}/file:
     post:
+      summary: Send a media file to a user
       tags:
-      - Messages
-      summary: Send a message to a group
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/messages_group_body'
-        required: true
-      responses:
-        "202":
-          description: Message sent to group successfully
-  /messages/{messageId}:
-    delete:
-      tags:
-      - Messages
-      summary: Delete a specific message
+        - Messages
       parameters:
-      - name: messageId
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "204":
-          description: Message deleted successfully
-    patch:
-      tags:
-      - Messages
-      summary: Edit a specific message
-      parameters:
-      - name: messageId
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
       requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/messages_messageId_body'
         required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
       responses:
-        "200":
-          description: Message edited successfully
-  /messages/media:
+        '202':
+          description: Media file sent successfully
+        '400':
+          description: Invalid request data
+          
+  /messages/group/{groupId}/file:
+    post:
+      summary: Send a media file to a group
+      tags:
+        - Messages
+      parameters:
+        - in: path
+          name: groupId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '202':
+          description: Media file sent successfully
+        '400':
+          description: Invalid request data
+          
+  /messages/file:
     get:
+      summary: Retrieve media files from messages
       tags:
-      - Messages
-      summary: Retrieve media files
+        - Messages
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+          description: User ID associated with the files
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: Limit the number of results
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: Offset for pagination
+        - in: query
+          name: from_ts
+          schema:
+            type: string
+          description: Start timestamp for filtering files
+        - in: query
+          name: to_ts
+          schema:
+            type: string
+          description: End timestamp for filtering files
       responses:
-        "200":
+        '200':
           description: List of received media files
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/inline_response_200_5'
-                x-content-type: application/json
-    post:
-      tags:
-      - Messages
-      summary: Send a media file
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/messages_media_body'
-        required: true
-      responses:
-        "202":
-          description: Media file sent successfully
+                  type: object
+                  properties:
+                    fileId:
+                      type: string
+                    senderId:
+                      type: string
+                    fileUrl:
+                      type: string
+                    timestamp:
+                      type: string
+        '400':
+          description: Invalid request data
+          
 components:
-  schemas:
-    messages_group_body:
-      type: object
-      properties:
-        groupId:
-          type: string
-        message:
-          type: string
-    messages_personal_body:
-      type: object
-      properties:
-        receiverId:
-          type: string
-        message:
-          type: string
-    inline_response_200_5:
-      type: object
-      properties:
-        fileId:
-          type: string
-        senderId:
-          type: string
-        fileUrl:
-          type: string
-        timestamp:
-          type: string
-      example:
-        senderId: senderId
-        fileUrl: fileUrl
-        fileId: fileId
-        timestamp: timestamp
-    messages_messageId_body:
-      type: object
-      properties:
-        newMessage:
-          type: string
-    userId_profile_body:
-      type: object
-      properties:
-        name:
-          type: string
-        avatarUrl:
-          type: string
-    messages_media_body:
-      type: object
-      properties:
-        receiverId:
-          type: string
-        file:
-          type: string
-          format: binary
-    inline_response_201:
-      type: object
-      properties:
-        userId:
-          type: string
-        message:
-          type: string
-      example:
-        message: message
-        userId: userId
-    inline_response_200_1:
-      type: object
-      properties:
-        contactId:
-          type: string
-        name:
-          type: string
-      example:
-        contactId: contactId
-        name: name
-    auth_login_body:
-      type: object
-      properties:
-        username:
-          type: string
-        password:
-          type: string
-    inline_response_200:
-      type: object
-      properties:
-        token:
-          type: string
-      example:
-        token: token
-    users_register_body:
-      type: object
-      properties:
-        username:
-          type: string
-        password:
-          type: string
-        email:
-          type: string
-    inline_response_200_2:
-      type: object
-      properties:
-        messageId:
-          type: string
-        senderId:
-          type: string
-        message:
-          type: string
-        timestamp:
-          type: string
-        status:
-          type: string
-      example:
-        senderId: senderId
-        messageId: messageId
-        message: message
-        timestamp: timestamp
-        status: status
-    inline_response_200_3:
-      type: object
-      properties:
-        status:
-          type: string
-      example:
-        status: status
-    inline_response_200_4:
-      type: object
-      properties:
-        messageId:
-          type: string
-        senderId:
-          type: string
-        message:
-          type: string
-        timestamp:
-          type: string
-      example:
-        senderId: senderId
-        messageId: messageId
-        message: message
-        timestamp: timestamp
-    userId_contacts_body:
-      type: object
-      properties:
-        contactId:
-          type: string
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+security:
+  - bearerAuth: []
