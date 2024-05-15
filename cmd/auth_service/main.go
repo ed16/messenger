@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	userRepo := &repository.MockUserRepository{}
+	userRepo := &repository.UserRepoImpl{}
 	authService := auth.AuthService{UserRepository: userRepo}
 
 	http.HandleFunc("/auth/login", handlers.LoginHandler(&authService))

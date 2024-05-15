@@ -23,10 +23,14 @@ type CustomClaims struct {
 }
 
 func (s *AuthService) Authenticate(username, password string) (string, error) {
-	user, _ := s.UserRepository.GetUserByUsername(username)
-	err := s.CheckPasswordHash(password, user.PasswordHash)
+	user, err := s.UserRepository.GetUserByUsername(username)
 	if user == nil || err != nil {
-		return "", errors.New("Invalid credentials")
+		return "", errors.New("invalid credentials")
+	}
+
+	err = s.CheckPasswordHash(password, user.PasswordHash)
+	if err != nil {
+		return "", errors.New("invalid credentials")
 	}
 
 	tokenString, err := s.GetToken(user.UserId)
@@ -69,7 +73,7 @@ func (s *AuthService) GetPasswordHash(password string) (string, error) {
 	// Generate a bcrypt hash of the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", err // return an error if hashing fails
+		return "", err
 	}
 	fmt.Println(string(hashedPassword))
 	return string(hashedPassword), nil

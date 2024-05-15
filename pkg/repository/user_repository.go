@@ -4,18 +4,18 @@ import (
 	"github.com/ed16/messenger/pkg/domain"
 )
 
-type MockUserRepository struct{}
+type UserRepoImpl struct{}
 
 type UserRepository interface {
 	InsertUser(user *domain.User) error
 	GetUserByUsername(username string) (*domain.User, error)
 }
 
-func (m *MockUserRepository) InsertUser(user *domain.User) error {
+func (m *UserRepoImpl) InsertUser(user *domain.User) error {
 	return nil
 }
 
-func (m *MockUserRepository) GetUserByUsername(username string) (*domain.User, error) {
+func (m *UserRepoImpl) GetUserByUsername(username string) (*domain.User, error) {
 	user := domain.NewUser()
 	//TO BE DELETED: For the testing purpose
 	if username == "admin" {
