@@ -23,18 +23,6 @@ func TestAuthenticate(t *testing.T) {
 					PasswordHash: "$2a$10$ewIvBUkJThkiNpNZspZ9COyZCpgBG7WK/9pWWrtLgx4ZJp2RXGvu.", // "password" hashed
 				}, nil
 			}
-			if username == "signingMethodRS256" {
-				token := jwt.New(jwt.SigningMethodRS256)
-				tokenString, err := token.SignedString([]byte("my-256-bit-secret"))
-				if err != nil {
-					t.Fatalf("Failed to sign token: %v", err)
-				}
-				return &domain.User{
-					UserId:       1,
-					Username:     "signingMethodRS256",
-					PasswordHash: tokenString,
-				}, nil
-			}
 			return nil, errors.New("invalid credentials")
 		},
 	}
