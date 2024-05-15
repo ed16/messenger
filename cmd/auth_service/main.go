@@ -13,5 +13,6 @@ func main() {
 	authService := auth.AuthService{UserRepository: userRepo}
 
 	http.HandleFunc("/auth/login", handlers.LoginHandler(&authService))
+	http.HandleFunc("/auth/validate-token", handlers.ValidateTokenHandler(&authService))
 	http.ListenAndServe(":8080", nil)
 }
