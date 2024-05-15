@@ -1,12 +1,16 @@
 package domain
 
-// User defines the structure for user credentials
+import "time"
+
 type User struct {
-	Username string
-	Password string
+	UserId       int64
+	Username     string // Email
+	Status       string
+	CreatedAt    time.Time // TIMESTAMP WITH TIME ZONE '2004-10-19 10:23:54+02'
+	PasswordHash string
 }
 
 // NewUser creates a new User instance
-func NewUser(username, password string) *User {
-	return &User{Username: username, Password: password}
+func NewUser() *User {
+	return &User{}
 }

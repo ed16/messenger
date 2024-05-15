@@ -4,12 +4,24 @@ import (
 	"github.com/ed16/messenger/pkg/domain"
 )
 
-// MockUserRepository is a mock repository for demonstration
 type MockUserRepository struct{}
 
-func (m *MockUserRepository) FindByUsername(username string) *domain.User {
-	if username == "admin" {
-		return domain.NewUser(username, "admin")
-	}
+type UserRepository interface {
+	InsertUser(user *domain.User) error
+	GetUserByUsername(username string) (*domain.User, error)
+}
+
+func (m *MockUserRepository) InsertUser(user *domain.User) error {
 	return nil
+}
+
+func (m *MockUserRepository) GetUserByUsername(username string) (*domain.User, error) {
+	user := domain.NewUser()
+	//TO BE DELETED: For the testing purpose
+	if username == "admin" {
+		user.UserId = 1
+		user.Username = "admin"
+		user.PasswordHash = "$2a$10$p7X62PHGUAGFnhdBDLFjs.ufDZY.59FbWlrBi1PxG4OKlHEb.lTVO"
+	}
+	return user, nil
 }
