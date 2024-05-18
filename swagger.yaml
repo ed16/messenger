@@ -59,7 +59,7 @@ paths:
         '401':
           description: Invalid or expired token
 
-  /users/register:
+  /users:
     post:
       summary: Register a new user
       tags:
@@ -91,7 +91,7 @@ paths:
                     type: string
         '400':
           description: Invalid request parameters
-          
+
   /users/:
     get:
       summary: Retrieve users based on filter criteria
@@ -129,7 +129,7 @@ paths:
           description: No users found matching the criteria
         '400':
           description: Invalid query parameters
-          
+
   /users/contacts/id:
     post:
       summary: Add a new contact by user ID
@@ -162,7 +162,6 @@ paths:
           description: Invalid user ID format
         '403':
           description: Unauthorized to add contacts
-
 
   /users/contacts:
     get:
@@ -207,7 +206,7 @@ paths:
           description: Profile updated successfully
         '400':
           description: Invalid request data
-          
+
   /users/{userId}/profile:
     get:
       summary: Retrieve a user's profile information
@@ -398,7 +397,7 @@ paths:
                       type: string
         '400':
           description: Invalid request parameters
-          
+
   /messages/user/{userId}/file:
     post:
       summary: Send a media file to a user
@@ -425,7 +424,7 @@ paths:
           description: Media file sent successfully
         '400':
           description: Invalid request data
-          
+
   /messages/group/{groupId}/file:
     post:
       summary: Send a media file to a group
@@ -452,7 +451,7 @@ paths:
           description: Media file sent successfully
         '400':
           description: Invalid request data
-          
+
   /messages/file:
     get:
       summary: Retrieve media files from messages
@@ -505,7 +504,130 @@ paths:
                       type: string
         '400':
           description: Invalid request data
-          
+
+  /groups:
+    post:
+      summary: Create a new group
+      tags:
+        - Groups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Group created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groupId:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+        '400':
+          description: Invalid request parameters
+        '403':
+          description: Unauthorized
+
+  /groups/{groupId}/users:
+    post:
+      summary: Add a user to a group
+      tags:
+        - Groups
+      parameters:
+        - in: path
+          name: groupId
+          required: true
+          schema:
+            type: string
+          description: Group ID to add the user to
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+      responses:
+        '201':
+          description: User added to group successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groupId:
+                    type: string
+                  userId:
+                    type: string
+        '400':
+          description: Invalid request parameters
+        '403':
+          description: Unauthorized
+        '404':
+          description: Group or user not found
+
+  /groups/{groupId}:
+    delete:
+      summary: Delete a group
+      tags:
+        - Groups
+      parameters:
+        - in: path
+          name: groupId
+          required: true
+          schema:
+            type: string
+          description: Group ID to delete
+      responses:
+        '200':
+          description: Group deleted successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Group not found
+
+  /groups/{groupId}/users/{userId}:
+    delete:
+      summary: Remove a user from a group
+      tags:
+        - Groups
+      parameters:
+        - in: path
+          name: groupId
+          required: true
+          schema:
+            type: string
+          description: Group ID from which the user will be removed
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+          description: User ID to remove from the group
+      responses:
+        '200':
+          description: User removed from group successfully
+        '400':
+          description: Invalid request parameters
+        '403':
+          description: Unauthorized
+        '404':
+          description: Group or user not found
+
 components:
   securitySchemes:
     bearerAuth:
