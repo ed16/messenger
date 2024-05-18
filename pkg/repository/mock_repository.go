@@ -15,3 +15,15 @@ func (m *MockUserRepository) GetUserByUsername(username string) (*domain.User, e
 func (m *MockUserRepository) InsertUser(user *domain.User) error {
 	return m.InsertUser(user)
 }
+
+func (m *MockUserRepository) GetUserByID(userID int64) (*domain.User, error) {
+	return m.GetUserByID(userID)
+}
+
+func (m *MockUserRepository) UpdateUser(user *domain.User) error {
+	return m.UpdateUser(user)
+}
+
+func (m *MockUserRepository) GetUsersByUsername(username string) ([]*domain.User, error) {
+	return m.GetUsersByUsername(username)
+}
