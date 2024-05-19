@@ -91,8 +91,6 @@ paths:
                     type: string
         '400':
           description: Invalid request parameters
-
-  /users/:
     get:
       summary: Retrieve users based on filter criteria
       tags:
@@ -130,7 +128,7 @@ paths:
         '400':
           description: Invalid query parameters
 
-  /users/contacts/id:
+  /users/contacts:
     post:
       summary: Add a new contact by user ID
       tags:
@@ -162,8 +160,6 @@ paths:
           description: Invalid user ID format
         '403':
           description: Unauthorized to add contacts
-
-  /users/contacts:
     get:
       summary: Retrieve a user's contacts
       tags:

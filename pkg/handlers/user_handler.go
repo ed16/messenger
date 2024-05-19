@@ -63,52 +63,44 @@ type UpdateProfileRequest struct {
 	Status   byte   `json:"status"`
 }
 
-func AddContactHandler(service *user.UserService) http.HandlerFunc {
+func ContactsHandler(service *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		if r.Method == http.MethodGet {
+
+			userIDStr := r.URL.Query().Get("user_id")
+			userID, err := strconv.ParseInt(userIDStr, 10, 64)
+			if err != nil {
+				http.Error(w, "Invalid user ID", http.StatusBadRequest)
+				return
+			}
+
+			contacts, err := service.GetUserContacts(userID)
+			if err != nil {
+				http.Error(w, "Failed to retrieve contacts", http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(contacts)
+		} else if r.Method == http.MethodPost {
+			var req AddContactRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "Invalid request", http.StatusBadRequest)
+				return
+			}
+			defer r.Body.Close()
+
+			err := service.AddContact(req.UserID, req.ContactID)
+			if err != nil {
+				http.Error(w, "Failed to add contact", http.StatusInternalServerError)
+				return
+			}
+
+			w.WriteHeader(http.StatusNoContent)
+		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-
-		var req AddContactRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request", http.StatusBadRequest)
-			return
-		}
-		defer r.Body.Close()
-
-		err := service.AddContact(req.UserID, req.ContactID)
-		if err != nil {
-			http.Error(w, "Failed to add contact", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusNoContent)
-	}
-}
-
-func GetContactsHandler(service *user.UserService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		userIDStr := r.URL.Query().Get("user_id")
-		userID, err := strconv.ParseInt(userIDStr, 10, 64)
-		if err != nil {
-			http.Error(w, "Invalid user ID", http.StatusBadRequest)
-			return
-		}
-
-		contacts, err := service.GetUserContacts(userID)
-		if err != nil {
-			http.Error(w, "Failed to retrieve contacts", http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(contacts)
 	}
 }
 
