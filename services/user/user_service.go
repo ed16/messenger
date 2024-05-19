@@ -24,12 +24,12 @@ func (s *UserService) CreateNewUser(username, password string) error {
 	return s.UserRepository.InsertUser(user)
 }
 
-func (s *UserService) AddContact(userID int64, contactID int64) error {
+func (s *UserService) AddContact(userID int64, contactUsername string) error {
 	user, err := s.UserRepository.GetUserByID(userID)
 	if err != nil {
 		return err
 	}
-	contact, err := s.UserRepository.GetUserByID(contactID)
+	contact, err := s.UserRepository.GetUserByUsername(contactUsername)
 	if err != nil {
 		return err
 	}
@@ -45,14 +45,8 @@ func (s *UserService) GetUserContacts(userID int64) ([]*domain.User, error) {
 	return user.Contacts, nil
 }
 
-func (s *UserService) UpdateUserProfile(userID int64, updatedUser *domain.User) error {
-	user, err := s.UserRepository.GetUserByID(userID)
-	if err != nil {
-		return err
-	}
-	user.Username = updatedUser.Username
-	user.Status = updatedUser.Status
-	return s.UserRepository.UpdateUser(user)
+func (s *UserService) UpdateUserProfile(profile *domain.Profile) error {
+	return nil
 }
 
 func (s *UserService) GetUsersByUsername(username string) ([]*domain.User, error) {

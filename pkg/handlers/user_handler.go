@@ -14,6 +14,15 @@ type RegisterRequest struct {
 	Password string `json:"password"`
 }
 
+type AddContactRequest struct {
+	ContactUsername string `json:"contact_username"`
+}
+
+type UpdateProfileRequest struct {
+	Description string `json:"description"`
+	PhotoURL    string `json:"photo_url"`
+}
+
 func UsersHandler(service *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
@@ -52,20 +61,29 @@ func UsersHandler(service *user.UserService) http.HandlerFunc {
 	}
 }
 
-type AddContactRequest struct {
-	UserID    int64 `json:"user_id"`
-	ContactID int64 `json:"contact_id"`
-}
-
-type UpdateProfileRequest struct {
-	UserID   int64  `json:"user_id"`
-	Username string `json:"username"`
-	Status   byte   `json:"status"`
-}
-
 func ContactsHandler(service *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
+		if r.Method == http.MethodPost {
+			var req AddContactRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "Invalid request", http.StatusBadRequest)
+				return
+			}
+			defer r.Body.Close()
+			userIDStr := r.Header.Get("User-Id")
+			userID, err := strconv.ParseInt(userIDStr, 10, 64)
+			if err != nil {
+				http.Error(w, "Invalid user ID", http.StatusBadRequest)
+				return
+			}
+			err = service.AddContact(userID, req.ContactUsername)
+			if err != nil {
+				http.Error(w, "Failed to add contact", http.StatusInternalServerError)
+				return
+			}
+
+			w.WriteHeader(http.StatusNoContent)
+		} else if r.Method == http.MethodGet {
 
 			userIDStr := r.URL.Query().Get("user_id")
 			userID, err := strconv.ParseInt(userIDStr, 10, 64)
@@ -82,21 +100,6 @@ func ContactsHandler(service *user.UserService) http.HandlerFunc {
 
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(contacts)
-		} else if r.Method == http.MethodPost {
-			var req AddContactRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				http.Error(w, "Invalid request", http.StatusBadRequest)
-				return
-			}
-			defer r.Body.Close()
-
-			err := service.AddContact(req.UserID, req.ContactID)
-			if err != nil {
-				http.Error(w, "Failed to add contact", http.StatusInternalServerError)
-				return
-			}
-
-			w.WriteHeader(http.StatusNoContent)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -117,13 +120,20 @@ func UpdateProfileHandler(service *user.UserService) http.HandlerFunc {
 			return
 		}
 		defer r.Body.Close()
-
-		updatedUser := &domain.User{
-			Username: req.Username,
-			Status:   req.Status,
+		userIDStr := r.Header.Get("User-Id")
+		userID, err := strconv.ParseInt(userIDStr, 10, 64)
+		if err != nil {
+			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			return
 		}
 
-		err := service.UpdateUserProfile(req.UserID, updatedUser)
+		updatedProfile := &domain.Profile{
+			UserId:      userID,
+			Description: req.Description,
+			PhotoURL:    req.PhotoURL,
+		}
+
+		err = service.UpdateUserProfile(updatedProfile)
 		if err != nil {
 			http.Error(w, "Failed to update profile", http.StatusInternalServerError)
 			return

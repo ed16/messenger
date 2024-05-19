@@ -13,7 +13,8 @@ type UserRepository interface {
 	GetUserByUsername(username string) (*domain.User, error)
 	GetUserByID(userID int64) (*domain.User, error)
 	UpdateUser(user *domain.User) error
-	GetUsersByUsername(username string) ([]*domain.User, error) // Added method
+	UpdateUserProfile(profile *domain.Profile) error
+	GetUsersByUsername(username string) ([]*domain.User, error)
 }
 
 func (m *UserRepoImpl) InsertUser(user *domain.User) error {
@@ -42,7 +43,12 @@ func (m *UserRepoImpl) GetUserByID(userID int64) (*domain.User, error) {
 	return user, nil
 }
 
+// Add contact or change password
 func (m *UserRepoImpl) UpdateUser(user *domain.User) error {
+	return nil
+}
+
+func (m *UserRepoImpl) UpdateUserProfile(profile *domain.Profile) error {
 	return nil
 }
 

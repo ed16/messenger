@@ -24,6 +24,10 @@ func (m *MockUserRepository) UpdateUser(user *domain.User) error {
 	return m.UpdateUser(user)
 }
 
+func (m *MockUserRepository) UpdateUserProfile(profile *domain.Profile) error {
+	return m.UpdateUserProfile(profile)
+}
+
 func (m *MockUserRepository) GetUsersByUsername(username string) ([]*domain.User, error) {
 	return m.GetUsersByUsername(username)
 }
