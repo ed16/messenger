@@ -17,10 +17,9 @@ func main() {
 		AuthService:    authService,
 	}
 
-	http.HandleFunc("/users", handlers.UsersHandler(&userService))                  // POST: Register a new user; GET: Retrieve users based on filter criteria
-	http.HandleFunc("/users/contacts/id", handlers.AddContactHandler(&userService)) // Add a new contact by user ID
-	http.HandleFunc("/users/contacts", handlers.GetContactsHandler(&userService))   // Retrieve a user's contacts
-	http.HandleFunc("/users/profile", handlers.UpdateProfileHandler(&userService))  // Edit user profile details
+	http.HandleFunc("/users", handlers.UsersHandler(&userService))                 // POST: Register a new user; GET: Retrieve users based on filter criteria
+	http.HandleFunc("/users/contacts", handlers.ContactsHandler(&userService))     // POST: Add a new contact by user ID; GET: Retrieve a user's contacts
+	http.HandleFunc("/users/profile", handlers.UpdateProfileHandler(&userService)) // Edit user profile details
 
 	http.ListenAndServe(":8080", nil)
 }
