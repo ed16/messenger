@@ -1,17 +1,29 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/ed16/messenger/pkg/repository"
+	"github.com/ed16/messenger/domain"
+	"github.com/ed16/messenger/internal/lib/crypto"
 	"github.com/golang-jwt/jwt/v4"
-	"golang.org/x/crypto/bcrypt"
 )
 
+type UserRepository interface {
+	InsertUser(user *domain.User) error
+	GetUserByUsername(username string) (domain.User, error)
+	GetUserByID(userID int64) (domain.User, error)
+	UpdateUser(user *domain.User) error
+	UpdateUserProfile(profile *domain.Profile) error
+	GetUsersByUsername(username string) ([]domain.User, error)
+}
+
+type UserService struct {
+	userRepo UserRepository
+}
+
 type AuthService struct {
-	UserRepository repository.UserRepository
+	UserRepository UserRepository
 	SecretKey      string
 }
 
@@ -24,13 +36,13 @@ type CustomClaims struct {
 
 func (s *AuthService) Authenticate(username, password string) (string, error) {
 	user, err := s.UserRepository.GetUserByUsername(username)
-	if user == nil || err != nil {
-		return "", errors.New("invalid credentials")
+	if err != nil {
+		return "", err
 	}
 
-	err = s.CheckPasswordHash(password, user.PasswordHash)
+	err = crypto.CheckPasswordHash(password, user.PasswordHash)
 	if err != nil {
-		return "", errors.New("invalid credentials")
+		return "", err
 	}
 
 	tokenString, err := s.GetToken(user.UserId)
@@ -63,29 +75,6 @@ func (s *AuthService) ParseToken(tokenString string) (*CustomClaims, error) {
 	} else {
 		return nil, fmt.Errorf("invalid token")
 	}
-}
-
-func (s *AuthService) GetPasswordHash(password string) (string, error) {
-	if password == "" {
-		return "", errors.New("invalid credentials")
-	}
-
-	// Generate a bcrypt hash of the password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	fmt.Println(string(hashedPassword))
-	return string(hashedPassword), nil
-}
-
-func (s *AuthService) CheckPasswordHash(password, hash string) error {
-	// Compare the hash with the plain-text password
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	if err != nil {
-		return errors.New("invalid credentials") // return an error if the password does not match
-	}
-	return nil
 }
 
 func (s *AuthService) GetToken(userId int64) (string, error) {

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ed16/messenger/pkg/domain"
+	"github.com/ed16/messenger/domain"
 	"github.com/ed16/messenger/services/user"
 )
 
@@ -21,6 +21,19 @@ type AddContactRequest struct {
 type UpdateProfileRequest struct {
 	Description string `json:"description"`
 	PhotoURL    string `json:"photo_url"`
+}
+
+type UserService interface {
+	CreateNewUser(username, password string) error
+	AddContact(userID int64, contactUsername string) error
+	GetUserContacts(userID int64) ([]domain.User, error)
+	UpdateUserProfile(profile *domain.Profile) error
+	GetUsersByUsername(username string) ([]domain.User, error)
+}
+
+// ArticleHandler  represent the httphandler for article
+type UserHandler struct {
+	Service UserService
 }
 
 func UsersHandler(service *user.UserService) http.HandlerFunc {
@@ -142,3 +155,20 @@ func UpdateProfileHandler(service *user.UserService) http.HandlerFunc {
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
+
+// func getStatusCode(err error) int {
+// 	if err == nil {
+// 		return http.StatusOK
+// 	}
+
+// 	switch err {
+// 	case domain.ErrInternalServerError:
+// 		return http.StatusInternalServerError
+// 	case domain.ErrNotFound:
+// 		return http.StatusNotFound
+// 	case domain.ErrConflict:
+// 		return http.StatusConflict
+// 	default:
+// 		return http.StatusInternalServerError
+// 	}
+// }

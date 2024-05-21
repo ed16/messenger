@@ -5,7 +5,3 @@ type Profile struct {
 	Description string
 	PhotoURL    string
 }
-
-func NewProfile() *Profile {
-	return &Profile{}
-}

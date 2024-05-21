@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ed16/messenger/pkg/domain"
-	"github.com/ed16/messenger/pkg/repository"
+	"github.com/ed16/messenger/domain"
+	"github.com/ed16/messenger/internal/lib/crypto"
+	"github.com/ed16/messenger/internal/repository"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
@@ -15,15 +16,15 @@ import (
 
 func TestAuthenticate(t *testing.T) {
 	mockRepo := &repository.MockUserRepository{
-		GetUserByUsernameFunc: func(username string) (*domain.User, error) {
+		GetUserByUsernameFunc: func(username string) (domain.User, error) {
 			if username == "validUser" {
-				return &domain.User{
+				return domain.User{
 					UserId:       1,
 					Username:     "validUser",
 					PasswordHash: "$2a$10$ewIvBUkJThkiNpNZspZ9COyZCpgBG7WK/9pWWrtLgx4ZJp2RXGvu.", // "password" hashed
 				}, nil
 			}
-			return nil, errors.New("invalid credentials")
+			return domain.User{}, errors.New("invalid credentials")
 		},
 	}
 
@@ -82,32 +83,30 @@ func TestParseToken(t *testing.T) {
 }
 
 func TestGetPasswordHash(t *testing.T) {
-	authService := AuthService{}
 
 	t.Run("valid password", func(t *testing.T) {
-		hash, err := authService.GetPasswordHash("password")
+		hash, err := crypto.GetPasswordHash("password")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, hash)
 	})
 
 	t.Run("empty password", func(t *testing.T) {
-		hash, err := authService.GetPasswordHash("")
+		hash, err := crypto.GetPasswordHash("")
 		assert.Error(t, err)
 		assert.Empty(t, hash)
 	})
 }
 
 func TestCheckPasswordHash(t *testing.T) {
-	authService := AuthService{}
 	hash, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 
 	t.Run("valid password", func(t *testing.T) {
-		err := authService.CheckPasswordHash("password", string(hash))
+		err := crypto.CheckPasswordHash("password", string(hash))
 		assert.NoError(t, err)
 	})
 
 	t.Run("invalid password", func(t *testing.T) {
-		err := authService.CheckPasswordHash("wrongpassword", string(hash))
+		err := crypto.CheckPasswordHash("wrongpassword", string(hash))
 		assert.Error(t, err)
 	})
 }
