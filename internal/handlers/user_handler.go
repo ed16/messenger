@@ -40,15 +40,15 @@ type UserHandler struct {
 func CreateUserHandler(service *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RegisterRequest
+		// Validate request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
 		}
 		defer r.Body.Close()
-
 		err := service.CreateNewUser(r.Context(), req.Username, req.Password)
 		if err != nil {
-			http.Error(w, "User registration failed", http.StatusInternalServerError)
+			http.Error(w, err.Error(), getStatusCode(err)) // "User registration failed", http.StatusInternalServerError
 			return
 		}
 
@@ -59,6 +59,7 @@ func CreateUserHandler(service *user.UserService) http.HandlerFunc {
 func GetUsersHandler(service *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		username := r.URL.Query().Get("username")
+		// Validate request
 		if username == "" {
 			http.Error(w, "Username query parameter is required", http.StatusBadRequest)
 			return
@@ -66,7 +67,7 @@ func GetUsersHandler(service *user.UserService) http.HandlerFunc {
 
 		users, err := service.GetUsersByUsername(r.Context(), username)
 		if err != nil {
-			http.Error(w, "Failed to retrieve users", http.StatusInternalServerError)
+			http.Error(w, err.Error(), getStatusCode(err)) // "Failed to retrieve users", http.StatusInternalServerError
 			return
 		}
 
@@ -79,6 +80,7 @@ func ContactsHandler(service *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			var req AddContactRequest
+			// Validate request
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				http.Error(w, "Invalid request", http.StatusBadRequest)
 				return
@@ -98,7 +100,6 @@ func ContactsHandler(service *user.UserService) http.HandlerFunc {
 
 			w.WriteHeader(http.StatusNoContent)
 		} else if r.Method == http.MethodGet {
-
 			userIDStr := r.URL.Query().Get("user_id")
 			userID, err := strconv.ParseInt(userIDStr, 10, 64)
 			if err != nil {
@@ -157,19 +158,19 @@ func UpdateProfileHandler(service *user.UserService) http.HandlerFunc {
 	}
 }
 
-// func getStatusCode(err error) int {
-// 	if err == nil {
-// 		return http.StatusOK
-// 	}
+func getStatusCode(err error) int {
+	if err == nil {
+		return http.StatusOK
+	}
 
-// 	switch err {
-// 	case domain.ErrInternalServerError:
-// 		return http.StatusInternalServerError
-// 	case domain.ErrNotFound:
-// 		return http.StatusNotFound
-// 	case domain.ErrConflict:
-// 		return http.StatusConflict
-// 	default:
-// 		return http.StatusInternalServerError
-// 	}
-// }
+	switch err {
+	case domain.ErrInternalServerError:
+		return http.StatusInternalServerError
+	case domain.ErrNotFound:
+		return http.StatusNotFound
+	case domain.ErrConflict:
+		return http.StatusConflict
+	default:
+		return http.StatusInternalServerError
+	}
+}
