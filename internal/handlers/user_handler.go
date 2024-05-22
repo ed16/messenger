@@ -36,41 +36,41 @@ type UserHandler struct {
 	Service UserService
 }
 
-func UsersHandler(service *user.UserService) http.HandlerFunc {
+func CreateUserHandler(service *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			var req RegisterRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				http.Error(w, "Invalid request", http.StatusBadRequest)
-				return
-			}
-			defer r.Body.Close()
-
-			err := service.CreateNewUser(req.Username, req.Password)
-			if err != nil {
-				http.Error(w, "User registration failed", http.StatusInternalServerError)
-				return
-			}
-
-			w.WriteHeader(http.StatusOK)
-		} else if r.Method == http.MethodGet {
-			username := r.URL.Query().Get("username")
-			if username == "" {
-				http.Error(w, "Username query parameter is required", http.StatusBadRequest)
-				return
-			}
-
-			users, err := service.GetUsersByUsername(username)
-			if err != nil {
-				http.Error(w, "Failed to retrieve users", http.StatusInternalServerError)
-				return
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(users)
-		} else {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		var req RegisterRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
 		}
+		defer r.Body.Close()
+
+		err := service.CreateNewUser(req.Username, req.Password)
+		if err != nil {
+			http.Error(w, "User registration failed", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func GetUsersHandler(service *user.UserService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		username := r.URL.Query().Get("username")
+		if username == "" {
+			http.Error(w, "Username query parameter is required", http.StatusBadRequest)
+			return
+		}
+
+		users, err := service.GetUsersByUsername(username)
+		if err != nil {
+			http.Error(w, "Failed to retrieve users", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(users)
 	}
 }
 
