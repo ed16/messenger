@@ -26,7 +26,7 @@ func LoginHandler(service *auth.AuthService) http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		token, err := service.Authenticate(req.Username, req.Password)
+		token, err := service.Authenticate(r.Context(), req.Username, req.Password)
 		if err != nil {
 			http.Error(w, "Authentication failed", http.StatusUnauthorized)
 			return

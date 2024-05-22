@@ -1,33 +1,35 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/ed16/messenger/domain"
 )
 
 type MockUserRepository struct {
-	GetUserByUsernameFunc func(username string) (domain.User, error)
+	GetUserByUsernameFunc func(ctx context.Context, username string) (domain.User, error)
 }
 
-func (m *MockUserRepository) GetUserByUsername(username string) (domain.User, error) {
-	return m.GetUserByUsernameFunc(username)
+func (m *MockUserRepository) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
+	return m.GetUserByUsernameFunc(ctx, username)
 }
 
-func (m *MockUserRepository) InsertUser(user *domain.User) error {
-	return m.InsertUser(user)
+func (m *MockUserRepository) InsertUser(ctx context.Context, user *domain.User) error {
+	return m.InsertUser(ctx, user)
 }
 
-func (m *MockUserRepository) GetUserByID(userID int64) (domain.User, error) {
-	return m.GetUserByID(userID)
+func (m *MockUserRepository) GetUserByID(ctx context.Context, userID int64) (domain.User, error) {
+	return m.GetUserByID(ctx, userID)
 }
 
-func (m *MockUserRepository) UpdateUser(user *domain.User) error {
-	return m.UpdateUser(user)
+func (m *MockUserRepository) UpdateUser(ctx context.Context, user *domain.User) error {
+	return m.UpdateUser(ctx, user)
 }
 
-func (m *MockUserRepository) UpdateUserProfile(profile *domain.Profile) error {
-	return m.UpdateUserProfile(profile)
+func (m *MockUserRepository) UpdateUserProfile(ctx context.Context, profile *domain.Profile) error {
+	return m.UpdateUserProfile(ctx, profile)
 }
 
-func (m *MockUserRepository) GetUsersByUsername(username string) ([]domain.User, error) {
-	return m.GetUsersByUsername(username)
+func (m *MockUserRepository) GetUsersByUsername(ctx context.Context, username string) ([]domain.User, error) {
+	return m.GetUsersByUsername(ctx, username)
 }

@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/ed16/messenger/domain"
 )
@@ -17,11 +17,11 @@ func NewUserRepo(db *sql.DB) *UserRepository {
 	}
 }
 
-func (m *UserRepository) InsertUser(user *domain.User) error {
+func (m *UserRepository) InsertUser(ctx context.Context, user *domain.User) error {
 	return nil
 }
 
-func (m *UserRepository) GetUserByUsername(username string) (domain.User, error) {
+func (m *UserRepository) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
 	user := domain.User{}
 	if username == "admin" {
 		user.UserId = 1
@@ -31,29 +31,29 @@ func (m *UserRepository) GetUserByUsername(username string) (domain.User, error)
 	return user, nil
 }
 
-func (m *UserRepository) GetUserByID(userID int64) (domain.User, error) {
+func (m *UserRepository) GetUserByID(ctx context.Context, userID int64) (domain.User, error) {
 	user := domain.User{}
 	if userID == 1 {
 		user.UserId = 1
 		user.Username = "user1"
 		user.Contacts = []domain.User{}
 	} else {
-		return user, errors.New("user not found")
+		return user, domain.ErrNotFound
 	}
 	return user, nil
 }
 
 // Add contact or change password
-func (m *UserRepository) UpdateUser(user *domain.User) error {
+func (m *UserRepository) UpdateUser(ctx context.Context, user *domain.User) error {
 	return nil
 }
 
-func (m *UserRepository) UpdateUserProfile(profile *domain.Profile) error {
+func (m *UserRepository) UpdateUserProfile(ctx context.Context, profile *domain.Profile) error {
 	return nil
 }
 
 // GetUsersByUsername makes search with the like condition <*username*> Status = 0
-func (m *UserRepository) GetUsersByUsername(username string) ([]domain.User, error) {
+func (m *UserRepository) GetUsersByUsername(ctx context.Context, username string) ([]domain.User, error) {
 	users := make([]domain.User, 0)
 	// Simulate fetching users by username
 	if username == "admin" {
@@ -61,6 +61,8 @@ func (m *UserRepository) GetUsersByUsername(username string) ([]domain.User, err
 		user.UserId = 1
 		user.Username = "admin"
 		users = append(users, user)
+	} else {
+		return users, domain.ErrNotFound
 	}
 	return users, nil
 }

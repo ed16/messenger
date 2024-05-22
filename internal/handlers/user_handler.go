@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -24,11 +25,11 @@ type UpdateProfileRequest struct {
 }
 
 type UserService interface {
-	CreateNewUser(username, password string) error
-	AddContact(userID int64, contactUsername string) error
-	GetUserContacts(userID int64) ([]domain.User, error)
-	UpdateUserProfile(profile *domain.Profile) error
-	GetUsersByUsername(username string) ([]domain.User, error)
+	CreateNewUser(ctx context.Context, password string) error
+	AddContact(ctx context.Context, userID int64, contactUsername string) error
+	GetUserContacts(ctx context.Context, userID int64) ([]domain.User, error)
+	UpdateUserProfile(ctx context.Context, profile *domain.Profile) error
+	GetUsersByUsername(ctx context.Context, username string) ([]domain.User, error)
 }
 
 // ArticleHandler  represent the httphandler for article
@@ -45,7 +46,7 @@ func CreateUserHandler(service *user.UserService) http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		err := service.CreateNewUser(req.Username, req.Password)
+		err := service.CreateNewUser(r.Context(), req.Username, req.Password)
 		if err != nil {
 			http.Error(w, "User registration failed", http.StatusInternalServerError)
 			return
@@ -63,7 +64,7 @@ func GetUsersHandler(service *user.UserService) http.HandlerFunc {
 			return
 		}
 
-		users, err := service.GetUsersByUsername(username)
+		users, err := service.GetUsersByUsername(r.Context(), username)
 		if err != nil {
 			http.Error(w, "Failed to retrieve users", http.StatusInternalServerError)
 			return
@@ -89,7 +90,7 @@ func ContactsHandler(service *user.UserService) http.HandlerFunc {
 				http.Error(w, "Invalid user ID", http.StatusBadRequest)
 				return
 			}
-			err = service.AddContact(userID, req.ContactUsername)
+			err = service.AddContact(r.Context(), userID, req.ContactUsername)
 			if err != nil {
 				http.Error(w, "Failed to add contact", http.StatusInternalServerError)
 				return
@@ -105,7 +106,7 @@ func ContactsHandler(service *user.UserService) http.HandlerFunc {
 				return
 			}
 
-			contacts, err := service.GetUserContacts(userID)
+			contacts, err := service.GetUserContacts(r.Context(), userID)
 			if err != nil {
 				http.Error(w, "Failed to retrieve contacts", http.StatusInternalServerError)
 				return
@@ -146,7 +147,7 @@ func UpdateProfileHandler(service *user.UserService) http.HandlerFunc {
 			PhotoURL:    req.PhotoURL,
 		}
 
-		err = service.UpdateUserProfile(updatedProfile)
+		err = service.UpdateUserProfile(r.Context(), updatedProfile)
 		if err != nil {
 			http.Error(w, "Failed to update profile", http.StatusInternalServerError)
 			return

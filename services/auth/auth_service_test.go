@@ -2,6 +2,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -16,7 +17,7 @@ import (
 
 func TestAuthenticate(t *testing.T) {
 	mockRepo := &repository.MockUserRepository{
-		GetUserByUsernameFunc: func(username string) (domain.User, error) {
+		GetUserByUsernameFunc: func(ctx context.Context, username string) (domain.User, error) {
 			if username == "validUser" {
 				return domain.User{
 					UserId:       1,
@@ -34,19 +35,22 @@ func TestAuthenticate(t *testing.T) {
 	}
 
 	t.Run("valid credentials", func(t *testing.T) {
-		token, err := authService.Authenticate("validUser", "password")
+		ctx := context.Background()
+		token, err := authService.Authenticate(ctx, "validUser", "password")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, token)
 	})
 
 	t.Run("invalid credentials", func(t *testing.T) {
-		token, err := authService.Authenticate("invalidUser", "password")
+		ctx := context.Background()
+		token, err := authService.Authenticate(ctx, "invalidUser", "password")
 		assert.Error(t, err)
 		assert.Empty(t, token)
 	})
 
 	t.Run("invalid password", func(t *testing.T) {
-		token, err := authService.Authenticate("validUser", "wrongpassword")
+		ctx := context.Background()
+		token, err := authService.Authenticate(ctx, "validUser", "wrongpassword")
 		assert.Error(t, err)
 		assert.Empty(t, token)
 	})
@@ -117,7 +121,8 @@ func TestGetToken(t *testing.T) {
 	}
 
 	t.Run("generate token", func(t *testing.T) {
-		token, err := authService.GetToken(1)
+		ctx := context.Background()
+		token, err := authService.GetToken(ctx, 1)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, token)
 	})

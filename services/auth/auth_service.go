@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -10,12 +11,12 @@ import (
 )
 
 type UserRepository interface {
-	InsertUser(user *domain.User) error
-	GetUserByUsername(username string) (domain.User, error)
-	GetUserByID(userID int64) (domain.User, error)
-	UpdateUser(user *domain.User) error
-	UpdateUserProfile(profile *domain.Profile) error
-	GetUsersByUsername(username string) ([]domain.User, error)
+	InsertUser(ctx context.Context, user *domain.User) error
+	GetUserByUsername(ctx context.Context, username string) (domain.User, error)
+	GetUserByID(ctx context.Context, userID int64) (domain.User, error)
+	UpdateUser(uctx context.Context, ser *domain.User) error
+	UpdateUserProfile(ctx context.Context, profile *domain.Profile) error
+	GetUsersByUsername(ctx context.Context, username string) ([]domain.User, error)
 }
 
 type AuthService struct {
@@ -36,8 +37,8 @@ func NewAuthService(ur UserRepository) *AuthService {
 	}
 }
 
-func (s *AuthService) Authenticate(username, password string) (string, error) {
-	user, err := s.userRepo.GetUserByUsername(username)
+func (s *AuthService) Authenticate(ctx context.Context, username, password string) (string, error) {
+	user, err := s.userRepo.GetUserByUsername(ctx, username)
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +48,7 @@ func (s *AuthService) Authenticate(username, password string) (string, error) {
 		return "", err
 	}
 
-	tokenString, err := s.GetToken(user.UserId)
+	tokenString, err := s.GetToken(ctx, user.UserId)
 	return tokenString, err
 }
 
@@ -79,7 +80,7 @@ func (s *AuthService) ParseToken(tokenString string) (*CustomClaims, error) {
 	}
 }
 
-func (s *AuthService) GetToken(userId int64) (string, error) {
+func (s *AuthService) GetToken(ctx context.Context, userId int64) (string, error) {
 	// Prepare the claims of the token
 	claims := CustomClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
