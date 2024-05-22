@@ -18,13 +18,9 @@ type UserRepository interface {
 	GetUsersByUsername(username string) ([]domain.User, error)
 }
 
-type UserService struct {
-	userRepo UserRepository
-}
-
 type AuthService struct {
-	UserRepository UserRepository
-	SecretKey      string
+	userRepo  UserRepository
+	secretKey string
 }
 
 // Custom claims structure, add any fields that you might need in your token
@@ -34,8 +30,14 @@ type CustomClaims struct {
 	UserRole string
 }
 
+func NewAuthService(ur UserRepository) *AuthService {
+	return &AuthService{
+		userRepo: ur,
+	}
+}
+
 func (s *AuthService) Authenticate(username, password string) (string, error) {
-	user, err := s.UserRepository.GetUserByUsername(username)
+	user, err := s.userRepo.GetUserByUsername(username)
 	if err != nil {
 		return "", err
 	}
@@ -62,7 +64,7 @@ func (s *AuthService) ParseToken(tokenString string) (*CustomClaims, error) {
 		}
 
 		// Return the secret key
-		return []byte(s.SecretKey), nil
+		return []byte(s.secretKey), nil
 	})
 
 	if err != nil {
@@ -92,7 +94,7 @@ func (s *AuthService) GetToken(userId int64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	//Sign and get the complete encoded token as a string using the secret
-	tokenString, err := token.SignedString([]byte(s.SecretKey))
+	tokenString, err := token.SignedString([]byte(s.secretKey))
 	if err != nil {
 		return "", err
 	}

@@ -29,8 +29,8 @@ func TestAuthenticate(t *testing.T) {
 	}
 
 	authService := AuthService{
-		UserRepository: mockRepo,
-		SecretKey:      "testSecretKey",
+		userRepo:  mockRepo,
+		secretKey: "testSecretKey",
 	}
 
 	t.Run("valid credentials", func(t *testing.T) {
@@ -54,7 +54,7 @@ func TestAuthenticate(t *testing.T) {
 
 func TestParseToken(t *testing.T) {
 	authService := AuthService{
-		SecretKey: "testSecretKey",
+		secretKey: "testSecretKey",
 	}
 
 	claims := CustomClaims{
@@ -67,7 +67,7 @@ func TestParseToken(t *testing.T) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(authService.SecretKey))
+	tokenString, err := token.SignedString([]byte(authService.secretKey))
 	assert.NoError(t, err)
 
 	t.Run("valid token", func(t *testing.T) {
@@ -113,7 +113,7 @@ func TestCheckPasswordHash(t *testing.T) {
 
 func TestGetToken(t *testing.T) {
 	authService := AuthService{
-		SecretKey: "testSecretKey",
+		secretKey: "testSecretKey",
 	}
 
 	t.Run("generate token", func(t *testing.T) {

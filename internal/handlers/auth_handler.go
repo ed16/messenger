@@ -19,11 +19,6 @@ type LoginResponse struct {
 
 func LoginHandler(service *auth.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -45,11 +40,6 @@ func LoginHandler(service *auth.AuthService) http.HandlerFunc {
 
 func ValidateTokenHandler(service *auth.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
 		// Extract the token from the Authorization header
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
