@@ -33,6 +33,7 @@ func LoginHandler(service *auth.AuthService) http.HandlerFunc {
 		}
 
 		resp := LoginResponse{Token: token}
+		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(resp)
 	}

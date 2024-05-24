@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,9 +27,11 @@ func main() {
 	router.HandleFunc("POST /users/contacts", handlers.ContactsHandler(userService))    // POST: Add a new contact by user ID; GET: Retrieve a user's contacts
 	router.HandleFunc("GET /users/contacts", handlers.ContactsHandler(userService))     // POST: Add a new contact by user ID; GET: Retrieve a user's contacts
 	router.HandleFunc("PUT /users/profile", handlers.UpdateProfileHandler(userService)) // Edit user profile details
+
+	// Wrap the router with a middleware that logs each request
 	server := http.Server{
 		Addr:    ":8080",
-		Handler: router,
+		Handler: logRequests(router),
 	}
 
 	// Create a channel to listen for interrupts (SIGINT, SIGTERM)
@@ -54,4 +57,28 @@ func main() {
 		panic(err)
 	}
 	// Server gracefully shutdown
+}
+
+// Middleware to log each request and its response status code
+func logRequests(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Serve the request and record the response status code
+		rw := &responseWriter{ResponseWriter: w}
+		next.ServeHTTP(rw, r)
+
+		// Log the request and response status code
+		log.Printf("%s %s - Response status code: %d", r.Method, r.URL.Path, rw.status)
+	})
+}
+
+// Custom ResponseWriter to capture the status code
+type responseWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+// Override WriteHeader to capture the status code
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.status = code
+	rw.ResponseWriter.WriteHeader(code)
 }
