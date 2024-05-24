@@ -1,0 +1,35 @@
+{
+    auto_https off
+    log {
+        output stdout
+        format console
+    }
+}
+
+:8080 {
+    # Route for login requests
+    route /auth/login* {
+        reverse_proxy auth:8080
+    }
+
+    route /auth/validate-token* {
+        reverse_proxy auth:8080
+    }
+
+    # Route for user requests
+    route /users* {
+        @original_path {
+            expression {http.request.orig_uri}
+        }
+        rewrite * /auth/validate-token
+        method POST
+        reverse_proxy auth:8080 {
+            @success status 200
+            handle_response @success {
+			    rewrite * {@original_path}
+                method  * GET
+                reverse_proxy user:8080
+            }
+        }
+    }
+}

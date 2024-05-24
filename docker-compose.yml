@@ -4,11 +4,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.auth
     environment:
-      - DIFFICULTY=5
-      - SERVER_KEEP_ALIVE=10s
-      - SERVER_DEADLINE=3s
-    ports:
-      - "8080:8080"
+      - EXAMPLE_VAR=5
     networks:
       - messenger-network
 
@@ -17,14 +13,21 @@ services:
       context: .
       dockerfile: docker/Dockerfile.user
     environment:
-      - AUTH_ADDR=auth:8080
-      - CLIENT_REQUEST_COUNT=50
-    ports:
-      - "8081:8080"
+      - EXAMPLE_VAR=5
     networks:
-      - messenger-network  
+      - messenger-network
+
+  caddy:
+    image: caddy:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - messenger-network
     depends_on:
       - auth
+      - user
 
 networks:
   messenger-network:
