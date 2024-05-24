@@ -1,0 +1,7 @@
+FROM golang:1.22.3
+
+WORKDIR /app
+COPY . .
+
+RUN go build -o auth_service ./cmd/auth_service
+CMD ["./auth_service"]

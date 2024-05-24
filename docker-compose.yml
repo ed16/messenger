@@ -1,0 +1,31 @@
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.auth
+    environment:
+      - DIFFICULTY=5
+      - SERVER_KEEP_ALIVE=10s
+      - SERVER_DEADLINE=3s
+    ports:
+      - "8080:8080"
+    networks:
+      - messenger-network
+
+  user:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.user
+    environment:
+      - AUTH_ADDR=auth:8080
+      - CLIENT_REQUEST_COUNT=50
+    ports:
+      - "8081:8080"
+    networks:
+      - messenger-network  
+    depends_on:
+      - auth
+
+networks:
+  messenger-network:
+    driver: bridge
