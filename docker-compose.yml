@@ -2,7 +2,7 @@ services:
   auth:
     build:
       context: .
-      dockerfile: infra/Dockerfile.auth
+      dockerfile: docker/Dockerfile.auth
     environment:
       - DIFFICULTY=5
       - SERVER_KEEP_ALIVE=10s
@@ -15,7 +15,7 @@ services:
   user:
     build:
       context: .
-      dockerfile: infra/Dockerfile.user
+      dockerfile: docker/Dockerfile.user
     environment:
       - AUTH_ADDR=auth:8080
       - CLIENT_REQUEST_COUNT=50
