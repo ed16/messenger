@@ -5,8 +5,15 @@ services:
       dockerfile: docker/Dockerfile.auth
     environment:
       - EXAMPLE_VAR=5
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
     networks:
       - messenger-network
+    depends_on:
+      - postgres
 
   user:
     build:
@@ -14,8 +21,15 @@ services:
       dockerfile: docker/Dockerfile.user
     environment:
       - EXAMPLE_VAR=5
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
     networks:
       - messenger-network
+    depends_on:
+      - postgres
 
   caddy:
     image: caddy:latest
@@ -29,6 +43,23 @@ services:
       - auth
       - user
 
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - messenger-network
+
 networks:
   messenger-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

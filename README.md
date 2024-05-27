@@ -35,6 +35,9 @@ cd messenger
 
 3. Build and run the services using docker-compose:
 ```bash
+colima start
+cp .env_template .env
+nano .env
 docker-compose up
 ```
 
