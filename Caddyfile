@@ -18,15 +18,18 @@
 
     # Route for user requests
     route /users* {
-        @original_path {
-            expression {http.request.orig_uri}
+        vars {
+            original_path {uri}
         }
         rewrite * /auth/validate-token
         method POST
         reverse_proxy auth:8080 {
             @success status 200
             handle_response @success {
-			    rewrite * {@original_path}
+                copy_response_headers {
+                   include User-Id
+                }
+                rewrite * {vars.original_path}
                 method  * GET
                 reverse_proxy user:8080
             }
