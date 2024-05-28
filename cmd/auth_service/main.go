@@ -14,9 +14,17 @@ import (
 )
 
 func main() {
-	dbConn := repository.GetMockDB()
-
-	userRepo := repository.NewUserRepo(dbConn.DB())
+	dbConn, err := repository.GetPostgresConn()
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		err := dbConn.Close()
+		if err != nil {
+			log.Fatal("got error when closing the DB connection", err)
+		}
+	}()
+	userRepo := repository.NewUserRepo(dbConn)
 	authService := auth.NewAuthService(userRepo)
 
 	router := http.NewServeMux()

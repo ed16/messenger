@@ -7,10 +7,10 @@ COPY . .
 RUN apt-get update && apt-get install -y postgresql-client
 
 # Copy the shell script
-COPY docker/check_and_create_db.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/check_and_create_db.sh
+COPY docker/migration.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/migration.sh
 
 RUN go build -o user_service ./cmd/user_service
 
 # Run the shell script before starting the service
-CMD ["/bin/bash", "-c", "/usr/local/bin/check_and_create_db.sh && ./user_service"]
+CMD ["/bin/bash", "-c", "/usr/local/bin/migration.sh && ./user_service"]

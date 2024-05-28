@@ -33,8 +33,7 @@ if [ "$TABLE_EXISTS" != "1" ]; then
   CREATE TABLE users (
     user_id BIGSERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    status VARCHAR(100),
+    status VARCHAR(1),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     password_hash CHAR(60) -- CHAR(60) is suitable for bcrypt hashes
   );"
@@ -42,3 +41,17 @@ if [ "$TABLE_EXISTS" != "1" ]; then
 else
   echo "Table 'users' already exists."
 fi
+
+# Upsert the user record
+USERNAME="admin"
+PASSWORD_HASH="\$2a\$10\$p7X62PHGUAGFnhdBDLFjs.ufDZY.59FbWlrBi1PxG4OKlHEb.lTVO"
+STATUS="1"
+
+echo "Upserting user $USERNAME..."
+psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+INSERT INTO users (username, password_hash, status) 
+VALUES ('$USERNAME', '$PASSWORD_HASH', '$STATUS') 
+ON CONFLICT (username) 
+DO 
+  UPDATE SET password_hash = EXCLUDED.password_hash, status = EXCLUDED.status;"
+echo "User $USERNAME upserted."

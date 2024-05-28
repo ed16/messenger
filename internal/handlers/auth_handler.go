@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -21,6 +22,7 @@ func LoginHandler(service *auth.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Println(err)
 			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
 		}
@@ -28,6 +30,7 @@ func LoginHandler(service *auth.AuthService) http.HandlerFunc {
 
 		token, err := service.Authenticate(r.Context(), req.Username, req.Password)
 		if err != nil {
+			log.Println(err)
 			http.Error(w, "Authentication failed", http.StatusUnauthorized)
 			return
 		}
