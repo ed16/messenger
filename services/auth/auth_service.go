@@ -11,12 +11,13 @@ import (
 )
 
 type UserRepository interface {
-	InsertUser(ctx context.Context, user *domain.User) error
-	GetUserByUsername(ctx context.Context, username string) (domain.User, error)
+	CreateUser(ctx context.Context, user *domain.User) error
+	UpdateUser(ctx context.Context, user *domain.User) error
 	GetUserByID(ctx context.Context, userID int64) (domain.User, error)
-	UpdateUser(uctx context.Context, ser *domain.User) error
-	UpdateUserProfile(ctx context.Context, profile *domain.Profile) error
+	GetUserByUsername(ctx context.Context, username string) (domain.User, error)
 	GetUsersByUsername(ctx context.Context, username string) ([]domain.User, error)
+	CreateUserContact(ctx context.Context, contact *domain.Contact) error
+	GetUserContactsByUserID(ctx context.Context, userID int64) ([]domain.Contact, error)
 }
 
 type AuthService struct {

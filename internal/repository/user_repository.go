@@ -20,7 +20,7 @@ func NewUserRepo(db *sql.DB) *UserRepository {
 	}
 }
 
-func (m *UserRepository) InsertUser(ctx context.Context, user *domain.User) error {
+func (m *UserRepository) CreateUser(ctx context.Context, user *domain.User) error {
 	query := `
 		INSERT INTO users (username, status, created_at, password_hash)
 		VALUES ($1, $2, $3, $4)
@@ -47,23 +47,19 @@ func (m *UserRepository) InsertUser(ctx context.Context, user *domain.User) erro
 	return nil
 }
 
-func (m *UserRepository) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
+func (m *UserRepository) UpdateUser(ctx context.Context, user *domain.User) error {
 	query := `
-		SELECT user_id, username, status, created_at, password_hash
-		FROM users
-		WHERE username = $1
+		UPDATE users
+		SET username = $1, status = $2, created_at = $3, password_hash = $4
+		WHERE user_id = $5
 	`
 
-	var user domain.User
-	err := m.DB.QueryRowContext(ctx, query, username).Scan(&user.UserId, &user.Username, &user.Status, &user.CreatedAt, &user.PasswordHash)
+	_, err := m.DB.ExecContext(ctx, query, user.Username, user.Status, user.CreatedAt, user.PasswordHash, user.UserId)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return domain.User{}, fmt.Errorf("user not found")
-		}
-		return domain.User{}, err
+		return err
 	}
 
-	return user, nil
+	return nil
 }
 
 func (m *UserRepository) GetUserByID(ctx context.Context, userID int64) (domain.User, error) {
@@ -85,24 +81,23 @@ func (m *UserRepository) GetUserByID(ctx context.Context, userID int64) (domain.
 	return user, nil
 }
 
-// Add contact or change password
-func (m *UserRepository) UpdateUser(ctx context.Context, user *domain.User) error {
+func (m *UserRepository) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
 	query := `
-		UPDATE users
-		SET username = $1, status = $2, created_at = $3, password_hash = $4
-		WHERE user_id = $5
+		SELECT user_id, username, status, created_at, password_hash
+		FROM users
+		WHERE username = $1
 	`
 
-	_, err := m.DB.ExecContext(ctx, query, user.Username, user.Status, user.CreatedAt, user.PasswordHash, user.UserId)
+	var user domain.User
+	err := m.DB.QueryRowContext(ctx, query, username).Scan(&user.UserId, &user.Username, &user.Status, &user.CreatedAt, &user.PasswordHash)
 	if err != nil {
-		return err
+		if err == sql.ErrNoRows {
+			return domain.User{}, fmt.Errorf("user not found")
+		}
+		return domain.User{}, err
 	}
 
-	return nil
-}
-
-func (m *UserRepository) UpdateUserProfile(ctx context.Context, profile *domain.Profile) error {
-	return nil
+	return user, nil
 }
 
 // GetUsersByUsername makes search with the like condition <*username*> Status = 0
@@ -134,4 +129,49 @@ func (m *UserRepository) GetUsersByUsername(ctx context.Context, username string
 	}
 
 	return users, nil
+}
+
+func (m *UserRepository) CreateUserContact(ctx context.Context, contact *domain.Contact) error {
+	query := `
+		INSERT INTO contacts (user_id, contact_user_id, created_at)
+		VALUES ($1, $2, $3)
+		RETURNING contact_id
+	`
+
+	err := m.DB.QueryRowContext(ctx, query, contact.UserId, contact.ContactUserId, contact.CreatedAt).Scan(&contact.ContactUserId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *UserRepository) GetUserContactsByUserID(ctx context.Context, userID int64) ([]domain.Contact, error) {
+	query := `
+		SELECT user_id, contact_user_id, created_at
+		FROM contacts
+		WHERE user_id = $1
+	`
+
+	rows, err := m.DB.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var contacts []domain.Contact
+	for rows.Next() {
+		var contact domain.Contact
+		err := rows.Scan(&contact.UserId, &contact.ContactUserId, &contact.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		contacts = append(contacts, contact)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return contacts, nil
 }

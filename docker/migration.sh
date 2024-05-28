@@ -42,7 +42,29 @@ else
   echo "Table 'users' already exists."
 fi
 
-# Upsert the user record
+# Create the 'contacts' table if it does not exist
+TABLE_EXISTS=$(psql -h $DB_HOST -U $DB_USER -d $DB_NAME -tAc "SELECT 1 FROM information_schema.tables WHERE table_name='contacts'")
+
+if [ "$TABLE_EXISTS" != "1" ]; then
+  echo "Table 'contacts' does not exist. Creating..."
+  psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+  CREATE TABLE contacts (
+    user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    contact_user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (user_id, contact_user_id)
+  );"
+
+  # Create index for quick retrieval of all contacts for a specific user
+  psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+  CREATE INDEX idx_user_id ON contacts (user_id);"
+
+  echo "Table 'contacts' and index created."
+else
+  echo "Table 'contacts' already exists."
+fi
+
+# Upsert the admin user record
 USERNAME="admin"
 PASSWORD_HASH="\$2a\$10\$p7X62PHGUAGFnhdBDLFjs.ufDZY.59FbWlrBi1PxG4OKlHEb.lTVO"
 STATUS="1"
