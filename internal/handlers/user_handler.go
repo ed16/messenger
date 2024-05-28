@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -42,13 +43,15 @@ func CreateUserHandler(service *user.UserService) http.HandlerFunc {
 		var req RegisterRequest
 		// Validate request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Println(err)
 			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
 		}
 		defer r.Body.Close()
 		err := service.CreateNewUser(r.Context(), req.Username, req.Password)
 		if err != nil {
-			http.Error(w, err.Error(), getStatusCode(err)) // "User registration failed", http.StatusInternalServerError
+			log.Println(err)
+			http.Error(w, "User registration failed", getStatusCode(err))
 			return
 		}
 
@@ -165,11 +168,9 @@ func getStatusCode(err error) int {
 	}
 
 	switch err {
-	case domain.ErrInternalServerError:
-		return http.StatusInternalServerError
 	case domain.ErrNotFound:
 		return http.StatusNotFound
-	case domain.ErrConflict:
+	case domain.ErrUserAlreadyExists:
 		return http.StatusConflict
 	default:
 		return http.StatusInternalServerError

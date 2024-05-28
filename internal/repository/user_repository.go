@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ed16/messenger/domain"
+	"github.com/lib/pq"
 )
 
 type UserRepository struct {
@@ -31,11 +32,15 @@ func (m *UserRepository) InsertUser(ctx context.Context, user *domain.User) erro
 		user.CreatedAt = time.Now()
 	}
 	if user.Status == 0 {
-		user.Status = 1 // Assuming 1 as default active status
+		user.Status = 1 // TODO: Add status schema
 	}
 
 	err := m.DB.QueryRowContext(ctx, query, user.Username, user.Status, user.CreatedAt, user.PasswordHash).Scan(&user.UserId)
 	if err != nil {
+		// Check if the error is a unique constraint violation
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return domain.ErrUserAlreadyExists
+		}
 		return err
 	}
 
