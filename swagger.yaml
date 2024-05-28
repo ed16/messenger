@@ -76,19 +76,9 @@ paths:
                 password:
                   type: string
                   format: password
-                email:
-                  type: string
-                  format: email
       responses:
         '201':
           description: User registered successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  userId:
-                    type: string
         '400':
           description: Invalid request parameters
     get:
@@ -97,16 +87,10 @@ paths:
         - Users
       parameters:
         - in: query
-          name: email
+          name: username
           schema:
             type: string
-            format: email
-          description: Optional email address to filter users by
-        - in: query
-          name: name
-          schema:
-            type: string
-          description: Optional name to filter users by
+          description: Username to filter users by
       responses:
         '200':
           description: List of users matching the criteria
@@ -117,11 +101,7 @@ paths:
                 items:
                   type: object
                   properties:
-                    userId:
-                      type: string
-                    email:
-                      type: string
-                    name:
+                    username:
                       type: string
         '404':
           description: No users found matching the criteria
@@ -130,7 +110,7 @@ paths:
 
   /users/contacts:
     post:
-      summary: Add a new contact by user ID
+      summary: Add a new contact by username
       tags:
         - Users
       requestBody:
@@ -140,20 +120,11 @@ paths:
             schema:
               type: object
               properties:
-                contactUserId:
+                contactUsername:
                   type: string
       responses:
         '201':
           description: Contact added successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  contactId:
-                    type: string
-                  message:
-                    type: string
         '404':
           description: No user found with provided user ID
         '400':
@@ -174,9 +145,7 @@ paths:
                 items:
                   type: object
                   properties:
-                    contactId:
-                      type: string
-                    name:
+                    username:
                       type: string
         '400':
           description: Invalid request data
@@ -193,7 +162,7 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                description:
                   type: string
                 avatarUrl:
                   type: string
@@ -203,18 +172,18 @@ paths:
         '400':
           description: Invalid request data
 
-  /users/{userId}/profile:
+  /users/{username}/profile:
     get:
       summary: Retrieve a user's profile information
       tags:
         - Users
       parameters:
         - in: path
-          name: userId
+          name: username
           required: true
           schema:
             type: string
-          description: User ID whose profile is being retrieved
+          description: Username whose profile is being retrieved
       responses:
         '200':
           description: Profile information retrieved successfully
@@ -223,9 +192,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  userId:
-                    type: string
-                  name:
+                  description:
                     type: string
                   avatarUrl:
                     type: string
@@ -234,14 +201,14 @@ paths:
         '400':
           description: Invalid request data
 
-  /messages/user/{userId}:
+  /messages/user/{username}:
     post:
       summary: Send a personal message to a user
       tags:
         - Messages
       parameters:
         - in: path
-          name: userId
+          name: username
           required: true
           schema:
             type: string
@@ -292,12 +259,6 @@ paths:
       tags:
         - Messages
       parameters:
-        - in: query
-          name: userId
-          required: true
-          schema:
-            type: string
-          description: User ID of the message recipient
         - in: query
           name: limit
           schema:
