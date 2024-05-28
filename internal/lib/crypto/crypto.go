@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"errors"
-	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,7 +16,6 @@ func GetPasswordHash(password string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(string(hashedPassword))
 	return string(hashedPassword), nil
 }
 
