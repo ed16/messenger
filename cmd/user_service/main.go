@@ -30,11 +30,11 @@ func main() {
 
 	router := http.NewServeMux()
 
-	router.HandleFunc("POST /users", handlers.CreateUserHandler(userService))           // POST: Register a new user
-	router.HandleFunc("GET /users", handlers.GetUsersHandler(userService))              // GET: Retrieve users based on filter criteria
-	router.HandleFunc("POST /users/contacts", handlers.ContactsHandler(userService))    // POST: Add a new contact by user ID; GET: Retrieve a user's contacts
-	router.HandleFunc("GET /users/contacts", handlers.ContactsHandler(userService))     // POST: Add a new contact by user ID; GET: Retrieve a user's contacts
-	router.HandleFunc("PUT /users/profile", handlers.UpdateProfileHandler(userService)) // Edit user profile details
+	router.HandleFunc("POST /users", handlers.CreateUserHandler(userService))             // POST: Register a new user
+	router.HandleFunc("GET /users", handlers.GetUsersHandler(userService))                // GET: Retrieve users based on filter criteria
+	router.HandleFunc("POST /users/contacts", handlers.CreateContactHandler(userService)) // POST: Add a new contact by user ID
+	router.HandleFunc("GET /users/contacts", handlers.GetContactsHandler(userService))    // GET: Retrieve a user's contacts
+	// TODO: router.HandleFunc("PUT /users/profile", handlers.UpdateProfileHandler(userService)) // PUT: Update user profile details
 
 	// Wrap the router with a middleware that logs each request
 	server := http.Server{
