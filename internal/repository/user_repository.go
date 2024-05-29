@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/ed16/messenger/domain"
 	"github.com/lib/pq"
@@ -26,14 +25,6 @@ func (m *UserRepository) CreateUser(ctx context.Context, user *domain.User) erro
 		VALUES ($1, $2, $3, $4)
 		RETURNING user_id
 	`
-
-	// Default values for created_at and status
-	if user.CreatedAt.IsZero() {
-		user.CreatedAt = time.Now()
-	}
-	if user.Status == 0 {
-		user.Status = 1 // TODO: Add status schema
-	}
 
 	err := m.DB.QueryRowContext(ctx, query, user.Username, user.Status, user.CreatedAt, user.PasswordHash).Scan(&user.UserId)
 	if err != nil {
@@ -135,7 +126,6 @@ func (m *UserRepository) CreateUserContact(ctx context.Context, contact *domain.
 	query := `
 		INSERT INTO contacts (user_id, contact_user_id, created_at)
 		VALUES ($1, $2, $3)
-		RETURNING contact_id
 	`
 
 	err := m.DB.QueryRowContext(ctx, query, contact.UserId, contact.ContactUserId, contact.CreatedAt).Scan(&contact.ContactUserId)

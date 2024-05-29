@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ed16/messenger/domain"
 	"github.com/ed16/messenger/internal/lib/crypto"
@@ -27,7 +28,7 @@ func NewUserService(ur UserRepository) *UserService {
 	}
 }
 
-func (s *UserService) CreateNewUser(ctx context.Context, username, password string) error {
+func (s *UserService) CreateUser(ctx context.Context, username, password string) error {
 	user := &domain.User{}
 	user.Username = username
 
@@ -36,6 +37,7 @@ func (s *UserService) CreateNewUser(ctx context.Context, username, password stri
 		return err
 	}
 	user.PasswordHash = passwordHash
+	user.Status = 1 // TODO: Implement status schema
 
 	return s.userRepo.CreateUser(ctx, user)
 }
@@ -49,7 +51,12 @@ func (s *UserService) AddContact(ctx context.Context, userID int64, contactUsern
 	if err != nil {
 		return err
 	}
-	contact := &domain.Contact{UserId: user.UserId,
+	if user.UserId == contactUser.UserId {
+		return fmt.Errorf("It is not possible to add youself as a contact")
+	}
+
+	contact := &domain.Contact{
+		UserId:        user.UserId,
 		ContactUserId: contactUser.UserId,
 	}
 
