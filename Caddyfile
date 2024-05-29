@@ -12,14 +12,11 @@
         reverse_proxy auth:8080
     }
 
-    route /auth/validate-token* {
-        reverse_proxy auth:8080
-    }
-
-    # Route for user requests
+    # Route for users requests
     route /users* {
         vars {
             original_path {uri}
+            original_method {method}
         }
         rewrite * /auth/validate-token
         method POST
@@ -30,8 +27,35 @@
                    include User-Id
                 }
                 rewrite * {vars.original_path}
-                method  * GET
-                reverse_proxy user:8080
+                method  * {vars.original_method}
+                reverse_proxy user:8080 {
+                    handle_response {
+                        # Forward all response headers and status codes
+                        copy_response
+                        copy_response_headers
+                    }
+                }
+            }
+        }
+    }
+
+    # Route for messages requests
+    route /messages* {
+        vars {
+            original_path {uri}
+            original_method {method}
+        }
+        rewrite * /auth/validate-token
+        method POST
+        reverse_proxy auth:8080 {
+            @success status 200
+            handle_response @success {
+                copy_response_headers {
+                   include User-Id
+                }
+                rewrite * {vars.original_path}
+                method  * {vars.original_method}
+                reverse_proxy message:8080
             }
         }
     }
