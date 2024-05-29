@@ -11,18 +11,13 @@ import (
 	"github.com/ed16/messenger/services/user"
 )
 
-type RegisterRequest struct {
+type CreateUserRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-type AddContactRequest struct {
-	ContactUsername string `json:"contact_username"`
-}
-
-type UpdateProfileRequest struct {
-	Description string `json:"description"`
-	PhotoURL    string `json:"photo_url"`
+type CreateContactRequest struct {
+	ContactUsername string `json:"contactUsername"`
 }
 
 type UserService interface {
@@ -39,7 +34,7 @@ type UserHandler struct {
 
 func CreateUserHandler(service *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req RegisterRequest
+		var req CreateUserRequest
 		// Validate request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			log.Println(err)
@@ -47,7 +42,7 @@ func CreateUserHandler(service *user.UserService) http.HandlerFunc {
 			return
 		}
 		defer r.Body.Close()
-		err := service.CreateNewUser(r.Context(), req.Username, req.Password)
+		err := service.CreateUser(r.Context(), req.Username, req.Password)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "User registration failed", getStatusCode(err))
@@ -82,7 +77,7 @@ func GetUsersHandler(service *user.UserService) http.HandlerFunc {
 
 func CreateContactHandler(service *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req AddContactRequest
+		var req CreateContactRequest
 		// Validate request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
