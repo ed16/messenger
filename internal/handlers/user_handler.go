@@ -104,7 +104,7 @@ func CreateContactHandler(service *user.UserService) http.HandlerFunc {
 
 func GetContactsHandler(service *user.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userIDStr := r.URL.Query().Get("user_id")
+		userIDStr := r.Header.Get("User-Id")
 		userID, err := strconv.ParseInt(userIDStr, 10, 64)
 		// Validate request
 		if err != nil {
