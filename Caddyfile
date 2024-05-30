@@ -14,49 +14,19 @@
 
     # Route for users requests
     route /users* {
-        vars {
-            original_path {uri}
-            original_method {method}
-        }
-        rewrite * /auth/validate-token
-        method POST
-        reverse_proxy auth:8080 {
-            @success status 200
-            handle_response @success {
-                copy_response_headers {
-                   include User-Id
-                }
-                rewrite * {vars.original_path}
-                method  * {vars.original_method}
-                reverse_proxy user:8080 {
-                    handle_response {
-                        # Forward all response headers and status codes
-                        copy_response
-                        copy_response_headers
-                    }
-                }
-            }
-        }
+        forward_auth auth:8080 {
+		    uri /auth/validate-token
+		    copy_headers User-Id
+	    }
+        reverse_proxy user:8080
     }
 
-    # Route for messages requests
+    # Route for messages
     route /messages* {
-        vars {
-            original_path {uri}
-            original_method {method}
-        }
-        rewrite * /auth/validate-token
-        method POST
-        reverse_proxy auth:8080 {
-            @success status 200
-            handle_response @success {
-                copy_response_headers {
-                   include User-Id
-                }
-                rewrite * {vars.original_path}
-                method  * {vars.original_method}
-                reverse_proxy message:8080
-            }
-        }
+        forward_auth auth:8080 {
+		    uri /auth/validate-token
+		    copy_headers User-Id
+	    }
+        reverse_proxy message:8080
     }
 }

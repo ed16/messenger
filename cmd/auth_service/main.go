@@ -28,8 +28,8 @@ func main() {
 	authService := auth.NewAuthService(userRepo)
 
 	router := http.NewServeMux()
-	router.HandleFunc("/auth/login/", handlers.LoginHandler(authService))
-	router.HandleFunc("/auth/validate-token", handlers.ValidateTokenHandler(authService))
+	router.HandleFunc("POST /auth/login/", handlers.LoginHandler(authService))
+	router.HandleFunc("GET /auth/validate-token", handlers.ValidateTokenHandler(authService)) // Always GET, so that the incoming request's body is not consumed
 
 	// Wrap the router with a middleware that logs each request
 	server := http.Server{
