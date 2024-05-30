@@ -83,7 +83,7 @@ func (m *UserRepository) GetUserByUsername(ctx context.Context, username string)
 	err := m.DB.QueryRowContext(ctx, query, username).Scan(&user.UserId, &user.Username, &user.Status, &user.CreatedAt, &user.PasswordHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return domain.User{}, fmt.Errorf("user not found")
+			return domain.User{}, domain.ErrNotFound
 		}
 		return domain.User{}, err
 	}
@@ -96,7 +96,8 @@ func (m *UserRepository) GetUsersByUsername(ctx context.Context, username string
 	query := `
 		SELECT user_id, username, status, created_at, password_hash
 		FROM users
-		WHERE username = $1
+		WHERE username LIKE '%' || $1 || '%'
+		LIMIT 100
 	`
 
 	rows, err := m.DB.QueryContext(ctx, query, username)
@@ -118,6 +119,9 @@ func (m *UserRepository) GetUsersByUsername(ctx context.Context, username string
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
+	if len(users) == 0 {
+		return users, domain.ErrNotFound
+	}
 
 	return users, nil
 }
@@ -128,7 +132,7 @@ func (m *UserRepository) CreateUserContact(ctx context.Context, contact *domain.
 		VALUES ($1, $2, $3)
 	`
 
-	err := m.DB.QueryRowContext(ctx, query, contact.UserId, contact.ContactUserId, contact.CreatedAt).Scan(&contact.ContactUserId)
+	_, err := m.DB.ExecContext(ctx, query, contact.UserId, contact.ContactUserId, contact.CreatedAt)
 	if err != nil {
 		return err
 	}

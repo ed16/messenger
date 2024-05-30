@@ -49,7 +49,7 @@ func (s *UserService) AddContact(ctx context.Context, userID int64, contactUsern
 	}
 	contactUser, err := s.userRepo.GetUserByUsername(ctx, contactUsername)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error while searching contact user: %v", err)
 	}
 	if user.UserId == contactUser.UserId {
 		return fmt.Errorf("It is not possible to add youself as a contact")
