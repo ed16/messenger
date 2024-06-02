@@ -219,7 +219,7 @@ paths:
             schema:
               type: object
               properties:
-                message:
+                content:
                   type: string
       responses:
         '202':
@@ -253,9 +253,9 @@ paths:
         '400':
           description: Invalid request data
 
-  /messages/user/:
+  /messages:
     get:
-      summary: Retrieve personal messages between users
+      summary: Retrieve personal messages
       tags:
         - Messages
       parameters:

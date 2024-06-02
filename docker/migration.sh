@@ -23,10 +23,9 @@ else
   echo "Database $DB_NAME already exists."
 fi
 
-# Check if the 'users' table exists
+# Create the 'users' table if it does not exist
 TABLE_EXISTS=$(psql -h $DB_HOST -U $DB_USER -d $DB_NAME -tc "SELECT 1 FROM information_schema.tables WHERE table_name = 'users'" | tr -d '[:space:]')
 
-# Create the 'users' table if it does not exist
 if [ "$TABLE_EXISTS" != "1" ]; then
   echo "Table 'users' does not exist. Creating..."
   psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
@@ -62,6 +61,56 @@ if [ "$TABLE_EXISTS" != "1" ]; then
   echo "Table 'contacts' and index created."
 else
   echo "Table 'contacts' already exists."
+fi
+
+# Create the 'media' table if it does not exist
+TABLE_EXISTS=$(psql -h $DB_HOST -U $DB_USER -d $DB_NAME -tAc "SELECT 1 FROM information_schema.tables WHERE table_name='media'")
+
+if [ "$TABLE_EXISTS" != "1" ]; then
+  echo "Table 'media' does not exist. Creating..."
+  psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+  CREATE TABLE media (
+    media_id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    file_path TEXT NOT NULL,
+    file_type VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );"
+
+  # Create index for quick retrieval of all media for a specific user
+  psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+  CREATE INDEX idx_user_id ON media (user_id);"
+
+  echo "Table 'media' and index created."
+else
+  echo "Table 'media' already exists."
+fi
+
+# Create the 'messages' table if it does not exist
+TABLE_EXISTS=$(psql -h $DB_HOST -U $DB_USER -d $DB_NAME -tAc "SELECT 1 FROM information_schema.tables WHERE table_name='messages'")
+
+if [ "$TABLE_EXISTS" != "1" ]; then
+  echo "Table 'messages' does not exist. Creating..."
+  psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+  CREATE TABLE messages (
+      message_id BIGSERIAL PRIMARY KEY,
+      sender_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+      recipient_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      is_read BOOLEAN DEFAULT FALSE,
+      is_received BOOLEAN DEFAULT FALSE,
+      media_id BIGINT,
+      CONSTRAINT fk_media FOREIGN KEY (media_id) REFERENCES media(media_id) ON DELETE SET NULL
+  );"
+
+  # Create index for quick retrieval of all messages for a specific user
+  psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+  CREATE INDEX idx_sender_id ON messages (sender_id);"
+
+  echo "Table 'messages' and index created."
+else
+  echo "Table 'messages' already exists."
 fi
 
 # Upsert the admin user record
