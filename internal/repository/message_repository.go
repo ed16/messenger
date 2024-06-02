@@ -19,12 +19,12 @@ func NewMessageRepo(db *sql.DB) *MessageRepository {
 
 func (m *MessageRepository) CreateMessage(ctx context.Context, message *domain.Message) (message_id int64, err error) {
 	query := `
-		INSERT INTO messages (sender_id, recipient_id, content, is_read, is_processed)
+		INSERT INTO messages (sender_id, recipient_id, content, is_read, is_received)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING message_id
 	`
 
-	err = m.DB.QueryRowContext(ctx, query, message.SenderId, message.RecipientId, message.Content, message.IsRead, message.IsReceived).Scan(message_id)
+	err = m.DB.QueryRowContext(ctx, query, message.SenderId, message.RecipientId, message.Content, message.IsRead, message.IsReceived).Scan(&message_id)
 	if err != nil {
 		return 0, err
 	}
@@ -37,7 +37,7 @@ func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, user_id int
 	SELECT 
 		message_id, 
 		sender_id,
-		recipient_id 
+		recipient_id, 
 		created_at, 
 		content,
 		is_read,
@@ -57,8 +57,8 @@ func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, user_id int
 	var messages []domain.Message
 	for rows.Next() {
 		var message domain.Message
-		err := rows.Scan(&message.MessageId, &message.SenderId, &message.RecipientId,
-			&message.CreatedAt, &message.Content, &message.IsRead, &message.IsReceived, &message.MessageId)
+		err := rows.Scan(&message.MessageId, &message.SenderId, &message.RecipientId, &message.CreatedAt,
+			&message.Content, &message.IsRead, &message.IsReceived, &message.MediaId)
 		if err != nil {
 			return nil, err
 		}

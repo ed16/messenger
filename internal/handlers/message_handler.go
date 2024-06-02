@@ -32,10 +32,10 @@ type MessageHandler struct {
 
 func CreateMessageHandler(service *message.MessageService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		recipient_id_str := r.URL.Query().Get("user_id")
+		recipient_id_str := r.PathValue("user_id")
 		// Validate request
 		if recipient_id_str == "" {
-			http.Error(w, "user_id query parameter is required", http.StatusBadRequest)
+			http.Error(w, "userId query parameter is required", http.StatusBadRequest)
 			return
 		}
 

@@ -8,7 +8,7 @@ type Message struct {
 	RecipientId int64
 	Content     string
 	CreatedAt   time.Time
-	IsRead      byte
-	IsReceived  byte
-	MedeiaId    int64
+	IsRead      bool
+	IsReceived  bool
+	MediaId     *int64
 }
