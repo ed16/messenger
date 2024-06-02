@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ed16/messenger/internal/handlers"
+	"github.com/ed16/messenger/internal/middleware"
 	"github.com/ed16/messenger/internal/repository"
 	"github.com/ed16/messenger/services/auth"
 )
@@ -34,7 +35,7 @@ func main() {
 	// Wrap the router with a middleware that logs each request
 	server := http.Server{
 		Addr:    ":8080",
-		Handler: logRequests(router),
+		Handler: middleware.LogRequests(router),
 	}
 
 	// Create a channel to listen for interrupts (SIGINT, SIGTERM)
