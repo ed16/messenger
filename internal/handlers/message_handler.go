@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/ed16/messenger/domain"
-	"github.com/ed16/messenger/services/message"
 )
 
 type CreateMessageRequest struct {
@@ -19,18 +18,11 @@ type CreateMessageResponse struct {
 }
 
 type MessageService interface {
-	CreateNewUser(ctx context.Context, password string) error
-	AddContact(ctx context.Context, userID int64, contactUsername string) error
-	GetUserContacts(ctx context.Context, userID int64) ([]domain.User, error)
-	UpdateUserProfile(ctx context.Context, profile *domain.Profile) error
-	GetUsersByUsername(ctx context.Context, username string) ([]domain.User, error)
+	CreateMessage(ctx context.Context, sender_id, recipient_id int64, content string) (message_id int64, err error)
+	GetMessagesByUserId(ctx context.Context, user_id int64) ([]domain.Message, error)
 }
 
-type MessageHandler struct {
-	Service MessageService
-}
-
-func CreateMessageHandler(service *message.MessageService) http.HandlerFunc {
+func CreateMessageHandler(service MessageService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		recipient_id_str := r.PathValue("user_id")
 		// Validate request
@@ -64,7 +56,7 @@ func CreateMessageHandler(service *message.MessageService) http.HandlerFunc {
 	}
 }
 
-func GetMessagesHandler(service *message.MessageService) http.HandlerFunc {
+func GetMessagesHandler(service MessageService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user_id_str := r.Header.Get("User-Id")
 		user_id, err := strconv.ParseInt(user_id_str, 10, 64)

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/ed16/messenger/domain"
@@ -53,12 +54,7 @@ func (s *AuthService) Authenticate(ctx context.Context, username, password strin
 	return tokenString, err
 }
 
-// Typically we do not need to store JWT tokens on the server side for the primary purpose of session management or authentication.
-// However, there are a some scenarios where we might consider storing JWTs or related data on the server:
-// 1. Revocation List
-// 2. Performance Reasons
-// 3. Logging and Auditing
-func (s *AuthService) ParseToken(tokenString string) (*CustomClaims, error) {
+func (s *AuthService) ValidateToken(tokenString string) (userId int64, err error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// Validate the signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -70,14 +66,15 @@ func (s *AuthService) ParseToken(tokenString string) (*CustomClaims, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
 		// Additional claim checks can be added here, e.g., role verification
-		return claims, nil
+		userId, _ = strconv.ParseInt(claims.Subject, 10, 64)
+		return userId, nil
 	} else {
-		return nil, fmt.Errorf("invalid token")
+		return 0, fmt.Errorf("invalid token")
 	}
 }
 

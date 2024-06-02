@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/ed16/messenger/domain"
-	"github.com/ed16/messenger/services/user"
 )
 
 type CreateUserRequest struct {
@@ -21,18 +20,13 @@ type CreateContactRequest struct {
 }
 
 type UserService interface {
-	CreateNewUser(ctx context.Context, password string) error
+	CreateUser(ctx context.Context, username, password string) error
 	AddContact(ctx context.Context, userID int64, contactUsername string) error
-	GetUserContacts(ctx context.Context, userID int64) ([]domain.User, error)
-	UpdateUserProfile(ctx context.Context, profile *domain.Profile) error
+	GetUserContacts(ctx context.Context, userID int64) ([]domain.Contact, error)
 	GetUsersByUsername(ctx context.Context, username string) ([]domain.User, error)
 }
 
-type UserHandler struct {
-	Service UserService
-}
-
-func CreateUserHandler(service *user.UserService) http.HandlerFunc {
+func CreateUserHandler(service UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req CreateUserRequest
 		// Validate request
@@ -53,7 +47,7 @@ func CreateUserHandler(service *user.UserService) http.HandlerFunc {
 	}
 }
 
-func GetUsersHandler(service *user.UserService) http.HandlerFunc {
+func GetUsersHandler(service UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		username := r.URL.Query().Get("username")
 		// Validate request
@@ -75,7 +69,7 @@ func GetUsersHandler(service *user.UserService) http.HandlerFunc {
 	}
 }
 
-func CreateContactHandler(service *user.UserService) http.HandlerFunc {
+func CreateContactHandler(service UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req CreateContactRequest
 		// Validate request
@@ -102,7 +96,7 @@ func CreateContactHandler(service *user.UserService) http.HandlerFunc {
 	}
 }
 
-func GetContactsHandler(service *user.UserService) http.HandlerFunc {
+func GetContactsHandler(service UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDStr := r.Header.Get("User-Id")
 		userID, err := strconv.ParseInt(userIDStr, 10, 64)

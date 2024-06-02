@@ -12,27 +12,23 @@ import (
 	"github.com/ed16/messenger/internal/repository"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func TestAuthenticate(t *testing.T) {
-	mockRepo := &repository.MockUserRepository{
-		GetUserByUsernameFunc: func(ctx context.Context, username string) (domain.User, error) {
-			if username == "validUser" {
-				return domain.User{
-					UserId:       1,
-					Username:     "validUser",
-					PasswordHash: "$2a$10$ewIvBUkJThkiNpNZspZ9COyZCpgBG7WK/9pWWrtLgx4ZJp2RXGvu.", // "password" hashed
-				}, nil
-			}
-			return domain.User{}, errors.New("invalid credentials")
-		},
-	}
-
+	mockRepo := &repository.MockUserRepository{}
 	authService := AuthService{
 		userRepo:  mockRepo,
 		secretKey: "testSecretKey",
 	}
+
+	mockRepo.On("GetUserByUsername", mock.Anything, "validUser").Return(domain.User{
+		UserId:       1,
+		Username:     "validUser",
+		PasswordHash: "$2a$10$ewIvBUkJThkiNpNZspZ9COyZCpgBG7WK/9pWWrtLgx4ZJp2RXGvu.", // "password" hashed
+	}, nil)
+	mockRepo.On("GetUserByUsername", mock.Anything, "invalidUser").Return(domain.User{}, errors.New("invalid credentials"))
 
 	t.Run("valid credentials", func(t *testing.T) {
 		ctx := context.Background()
@@ -75,19 +71,18 @@ func TestParseToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("valid token", func(t *testing.T) {
-		parsedClaims, err := authService.ParseToken(tokenString)
+		userId, err := authService.ValidateToken(tokenString)
 		assert.NoError(t, err)
-		assert.Equal(t, claims.Subject, parsedClaims.Subject)
+		assert.Equal(t, int64(1), userId)
 	})
 
 	t.Run("invalid token", func(t *testing.T) {
-		_, err := authService.ParseToken("invalidToken")
+		_, err := authService.ValidateToken("invalidToken")
 		assert.Error(t, err)
 	})
 }
 
 func TestGetPasswordHash(t *testing.T) {
-
 	t.Run("valid password", func(t *testing.T) {
 		hash, err := crypto.GetPasswordHash("password")
 		assert.NoError(t, err)
