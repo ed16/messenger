@@ -201,14 +201,14 @@ paths:
         '400':
           description: Invalid request data
 
-  /messages/user/{username}:
+  /messages/user/{userId}:
     post:
       summary: Send a personal message to a user
       tags:
         - Messages
       parameters:
         - in: path
-          name: username
+          name: userId
           required: true
           schema:
             type: string

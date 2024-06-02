@@ -31,8 +31,8 @@ func main() {
 
 	router := http.NewServeMux()
 
-	router.HandleFunc("POST /messages/user/", handlers.CreateMessageHandler(messageService)) // POST: Send a personal message to a user
-	router.HandleFunc("GET /messages", handlers.GetMessagesHandler(messageService))          // GET: Retrieve personal messages
+	router.HandleFunc("POST /messages/user/{user_id}", handlers.CreateMessageHandler(messageService)) // POST: Send a personal message to a user
+	router.HandleFunc("GET /messages", handlers.GetMessagesHandler(messageService))                   // GET: Retrieve personal messages
 
 	// Wrap the router with a middleware that logs each request
 	server := http.Server{
