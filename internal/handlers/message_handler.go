@@ -60,14 +60,16 @@ func CreateMessageHandler(service MessageService) http.HandlerFunc {
 		}
 		message_id_str := strconv.Itoa(int(message_id))
 		resp := CreateMessageResponse{MessageId: message_id_str}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(resp)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Sending message failed", http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
+
 	}
 }
 
@@ -87,13 +89,15 @@ func GetMessagesHandler(service MessageService) http.HandlerFunc {
 			http.Error(w, "Failed to retrieve messages", getStatusCode(err))
 			return
 		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(users)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Sending message failed", http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
+
 	}
 }

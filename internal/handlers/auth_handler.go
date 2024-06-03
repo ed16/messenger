@@ -51,6 +51,9 @@ func LoginHandler(service AuthService) http.HandlerFunc {
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+
 		resp := LoginResponse{Token: token}
 		err = json.NewEncoder(w).Encode(resp)
 		if err != nil {
@@ -58,8 +61,6 @@ func LoginHandler(service AuthService) http.HandlerFunc {
 			http.Error(w, "Authentication failed", http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
 	}
 }
 
@@ -87,13 +88,15 @@ func ValidateTokenHandler(service AuthService) http.HandlerFunc {
 			return
 		}
 
+		w.Header().Set("User-Id", fmt.Sprint(userId))
+		w.WriteHeader(http.StatusOK)
+
 		_, err = w.Write([]byte("Token is valid"))
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Authentication failed", http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("User-Id", fmt.Sprint(userId))
-		w.WriteHeader(http.StatusOK)
+
 	}
 }
