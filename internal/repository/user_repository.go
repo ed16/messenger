@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 
 	"github.com/ed16/messenger/domain"
 	"github.com/lib/pq"
@@ -26,7 +27,9 @@ func (m *UserRepository) CreateUser(ctx context.Context, user *domain.User) erro
 		RETURNING user_id
 	`
 
-	err := m.DB.QueryRowContext(ctx, query, user.Username, user.Status, user.CreatedAt, user.PasswordHash).Scan(&user.UserId)
+	status_str := strconv.Itoa(int(user.Status))
+
+	err := m.DB.QueryRowContext(ctx, query, user.Username, status_str, user.CreatedAt, user.PasswordHash).Scan(&user.UserId)
 	if err != nil {
 		// Check if the error is a unique constraint violation
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
@@ -44,8 +47,9 @@ func (m *UserRepository) UpdateUser(ctx context.Context, user *domain.User) erro
 		SET username = $1, status = $2, created_at = $3, password_hash = $4
 		WHERE user_id = $5
 	`
+	status_str := strconv.Itoa(int(user.Status))
 
-	_, err := m.DB.ExecContext(ctx, query, user.Username, user.Status, user.CreatedAt, user.PasswordHash, user.UserId)
+	_, err := m.DB.ExecContext(ctx, query, user.Username, status_str, user.CreatedAt, user.PasswordHash, user.UserId)
 	if err != nil {
 		return err
 	}
@@ -61,13 +65,19 @@ func (m *UserRepository) GetUserByID(ctx context.Context, userID int64) (domain.
 	`
 
 	var user domain.User
-	err := m.DB.QueryRowContext(ctx, query, userID).Scan(&user.UserId, &user.Username, &user.Status, &user.CreatedAt, &user.PasswordHash)
+	var status_str string
+	err := m.DB.QueryRowContext(ctx, query, userID).Scan(&user.UserId, &user.Username, &status_str, &user.CreatedAt, &user.PasswordHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return domain.User{}, fmt.Errorf("user not found")
 		}
 		return domain.User{}, err
 	}
+	status_int, err := strconv.Atoi(status_str)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("Error converting string user status to int: %v", err)
+	}
+	user.Status = byte(status_int)
 
 	return user, nil
 }
