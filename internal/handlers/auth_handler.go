@@ -36,6 +36,7 @@ type AuthService interface {
 func LoginHandler(service AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req LoginRequest
+		// Validate request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			log.Println(err)
 			http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -51,15 +52,20 @@ func LoginHandler(service AuthService) http.HandlerFunc {
 		}
 
 		resp := LoginResponse{Token: token}
+		err = json.NewEncoder(w).Encode(resp)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Authentication failed", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
 	}
 }
 
 func ValidateTokenHandler(service AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Extract the token from the Authorization header
+		// Validate request
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			http.Error(w, "Authorization header missing", http.StatusUnauthorized)
@@ -81,9 +87,13 @@ func ValidateTokenHandler(service AuthService) http.HandlerFunc {
 			return
 		}
 
+		_, err = w.Write([]byte("Token is valid"))
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Authentication failed", http.StatusInternalServerError)
+			return
+		}
 		w.Header().Set("User-Id", fmt.Sprint(userId))
-
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Token is valid"))
 	}
 }

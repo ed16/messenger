@@ -48,7 +48,10 @@ func TestCreateMessageHandler_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 	var resp handlers.CreateMessageResponse
-	json.NewDecoder(rr.Body).Decode(&resp)
+	err := json.NewDecoder(rr.Body).Decode(&resp)
+	if err != nil {
+		panic(err)
+	}
 	assert.Equal(t, strconv.Itoa(int(messageID)), resp.MessageId)
 	mockService.AssertExpectations(t)
 }

@@ -40,7 +40,17 @@ func CreateMessageHandler(service MessageService) http.HandlerFunc {
 		defer r.Body.Close()
 		sender_id_str := r.Header.Get("User-Id")
 		sender_id, err := strconv.ParseInt(sender_id_str, 10, 64)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Sending message failed", http.StatusInternalServerError)
+			return
+		}
 		recipient_id, err := strconv.ParseInt(recipient_id_str, 10, 64)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Sending message failed", http.StatusInternalServerError)
+			return
+		}
 
 		message_id, err := service.CreateMessage(r.Context(), sender_id, recipient_id, req.Content)
 		if err != nil {
@@ -50,9 +60,14 @@ func CreateMessageHandler(service MessageService) http.HandlerFunc {
 		}
 		message_id_str := strconv.Itoa(int(message_id))
 		resp := CreateMessageResponse{MessageId: message_id_str}
+		err = json.NewEncoder(w).Encode(resp)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Sending message failed", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
 	}
 }
 
@@ -60,6 +75,11 @@ func GetMessagesHandler(service MessageService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user_id_str := r.Header.Get("User-Id")
 		user_id, err := strconv.ParseInt(user_id_str, 10, 64)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Getting messages failed", http.StatusInternalServerError)
+			return
+		}
 
 		users, err := service.GetMessagesByUserId(r.Context(), user_id)
 		if err != nil {
@@ -67,9 +87,13 @@ func GetMessagesHandler(service MessageService) http.HandlerFunc {
 			http.Error(w, "Failed to retrieve messages", getStatusCode(err))
 			return
 		}
-
+		err = json.NewEncoder(w).Encode(users)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Sending message failed", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(users)
 	}
 }

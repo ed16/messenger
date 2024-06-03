@@ -15,7 +15,10 @@ import (
 // testHandler is a simple HTTP handler for testing purposes.
 func testHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hello, World!"))
+	_, err := w.Write([]byte("Hello, World!"))
+	if err != nil {
+		panic(err)
+	}
 }
 
 // TestLogRequests tests the LogRequests middleware.

@@ -62,10 +62,14 @@ func GetUsersHandler(service UserService) http.HandlerFunc {
 			http.Error(w, "Failed to retrieve users", getStatusCode(err))
 			return
 		}
-
+		err = json.NewEncoder(w).Encode(users)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Failed to retrieve users", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(users)
 	}
 }
 
@@ -114,8 +118,14 @@ func GetContactsHandler(service UserService) http.HandlerFunc {
 			return
 		}
 
+		err = json.NewEncoder(w).Encode(contacts)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Failed to retrieve users", http.StatusInternalServerError)
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(contacts)
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
