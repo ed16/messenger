@@ -41,6 +41,8 @@ nano .env
 docker-compose up
 ```
 
+4. Use Postman with the following Postman collection for the test: [postman_collection.json](https://github.com/ed16/messenger/blob/main/postman_collection.json)
+
 ## Usage
 
 The API endpoints provided by the services can be accessed through HTTP requests. Here are the available endpoints:
