@@ -74,13 +74,13 @@ func (m *UserRepository) GetUserByID(ctx context.Context, userID int64) (domain.
 
 func (m *UserRepository) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
 	query := `
-		SELECT user_id, username, status, created_at, password_hash
+		SELECT user_id, username, password_hash
 		FROM users
-		WHERE username = $1
+		WHERE username = $1 and status = '1'
 	`
 
 	var user domain.User
-	err := m.DB.QueryRowContext(ctx, query, username).Scan(&user.UserId, &user.Username, &user.Status, &user.CreatedAt, &user.PasswordHash)
+	err := m.DB.QueryRowContext(ctx, query, username).Scan(&user.UserId, &user.Username, &user.PasswordHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return domain.User{}, domain.ErrNotFound
@@ -94,9 +94,9 @@ func (m *UserRepository) GetUserByUsername(ctx context.Context, username string)
 // GetUsersByUsername makes search with the like condition <*username*> Status = 0
 func (m *UserRepository) GetUsersByUsername(ctx context.Context, username string) ([]domain.User, error) {
 	query := `
-		SELECT user_id, username, status, created_at, password_hash
+		SELECT user_id, username
 		FROM users
-		WHERE username LIKE '%' || $1 || '%'
+		WHERE username LIKE '%' || $1 || '%' and status = '1'
 		LIMIT 100
 	`
 
@@ -109,7 +109,7 @@ func (m *UserRepository) GetUsersByUsername(ctx context.Context, username string
 	var users []domain.User
 	for rows.Next() {
 		var user domain.User
-		err := rows.Scan(&user.UserId, &user.Username, &user.Status, &user.CreatedAt, &user.PasswordHash)
+		err := rows.Scan(&user.UserId, &user.Username)
 		if err != nil {
 			return nil, err
 		}
