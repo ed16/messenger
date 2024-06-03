@@ -18,7 +18,9 @@
 		    uri /auth/validate-token
 		    copy_headers User-Id
 	    }
-        reverse_proxy user:8080
+        reverse_proxy user:8080 {
+            header_down -Content-Type
+        }
     }
 
     # Route for messages
@@ -27,6 +29,8 @@
 		    uri /auth/validate-token
 		    copy_headers User-Id
 	    }
-        reverse_proxy message:8080
+        reverse_proxy message:8080 {
+            header_down * *
+        }
     }
 }
