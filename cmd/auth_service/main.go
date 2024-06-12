@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ed16/messenger/internal/handlers"
@@ -40,7 +41,7 @@ func main() {
 
 	// Create a channel to listen for interrupts (SIGINT, SIGTERM)
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
 	// Start the server in a separate goroutine
 	go func() {
