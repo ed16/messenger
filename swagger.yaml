@@ -39,26 +39,6 @@ paths:
         '401':
           description: Authentication failed
 
-  /auth/validate-token:
-    post:
-      summary: Validate an authentication token
-      tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                token:
-                  type: string
-      responses:
-        '200':
-          description: Token is valid
-        '401':
-          description: Invalid or expired token
-
   /users:
     post:
       summary: Register a new user
@@ -79,7 +59,16 @@ paths:
       responses:
         '201':
           description: User registered successfully
-        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  username:
+                    type: string
+      '400':
           description: Invalid request parameters
     get:
       summary: Retrieve users based on filter criteria
@@ -91,6 +80,26 @@ paths:
           schema:
             type: string
           description: Username to filter users by
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: Limit the number of results
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: Offset for pagination
+        - in: query
+          name: from_ts
+          schema:
+            type: string
+          description: Start timestamp for filtering messages
+        - in: query
+          name: to_ts
+          schema:
+            type: string
+          description: End timestamp for filtering messages
       responses:
         '200':
           description: List of users matching the criteria
@@ -101,8 +110,11 @@ paths:
                 items:
                   type: object
                   properties:
+                    userId:
+                      type: string
                     username:
                       type: string
+
         '404':
           description: No users found matching the criteria
         '400':
@@ -379,6 +391,13 @@ paths:
       responses:
         '202':
           description: Media file sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mediaId:
+                    type: string
         '400':
           description: Invalid request data
 
