@@ -17,7 +17,7 @@ import (
 func main() {
 	dbConn, err := repository.GetPostgresConn()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer func() {
 		err := dbConn.Close()
@@ -45,7 +45,7 @@ func main() {
 	// Start the server in a separate goroutine
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			panic(err)
+			log.Fatal(err)
 		}
 	}()
 
@@ -58,7 +58,7 @@ func main() {
 
 	// Shutdown the server
 	if err := server.Shutdown(ctx); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	// Server gracefully shutdown
 }

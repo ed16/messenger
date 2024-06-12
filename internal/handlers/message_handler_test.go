@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -50,7 +51,7 @@ func TestCreateMessageHandler_Success(t *testing.T) {
 	var resp handlers.CreateMessageResponse
 	err := json.NewDecoder(rr.Body).Decode(&resp)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	assert.Equal(t, strconv.Itoa(int(messageID)), resp.MessageId)
 	mockService.AssertExpectations(t)
