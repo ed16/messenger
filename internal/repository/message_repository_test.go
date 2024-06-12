@@ -23,12 +23,12 @@ func TestCreateMessage(t *testing.T) {
 		SenderId:    1,
 		RecipientId: 2,
 		Content:     "Hello, World!",
-		IsRead:      false,
-		IsReceived:  false,
+		Status:      domain.MessageStatusSent,
+		CreatedAt:   time.Now(),
 	}
 
 	mock.ExpectQuery(`INSERT INTO messages`).
-		WithArgs(message.SenderId, message.RecipientId, message.Content, message.IsRead, message.IsReceived).
+		WithArgs(message.SenderId, message.RecipientId, message.Content, message.Status).
 		WillReturnRows(sqlmock.NewRows([]string{"message_id"}).AddRow(1))
 
 	messageID, err := messageRepo.CreateMessage(context.Background(), message)
@@ -48,17 +48,24 @@ func TestGetMessagesByUserId(t *testing.T) {
 		MessageId:   1,
 		SenderId:    1,
 		RecipientId: 2,
-		CreatedAt:   time.Now(),
 		Content:     "Hello, World!",
-		IsRead:      false,
-		IsReceived:  false,
+		CreatedAt:   time.Now(),
+		Status:      domain.MessageStatusSent,
 		MediaId:     &mediaID,
 	}
 
-	mock.ExpectQuery(`SELECT message_id, sender_id, recipient_id, created_at, content, is_read, is_received, media_id FROM messages m WHERE m.sender_id = \$1 OR m.recipient_id = \$1 ORDER BY m.message_id ASC LIMIT 100`).
+	mock.ExpectQuery(`SELECT 
+			message_id, 
+			sender_id,
+			recipient_id, 
+			content,
+			created_at, 
+			status,
+			media_id 
+		FROM messages m WHERE m.sender_id = \$1 OR m.recipient_id = \$1 ORDER BY m.message_id ASC LIMIT 100`).
 		WithArgs(expectedMessage.SenderId).
-		WillReturnRows(sqlmock.NewRows([]string{"message_id", "sender_id", "recipient_id", "created_at", "content", "is_read", "is_received", "media_id"}).
-			AddRow(expectedMessage.MessageId, expectedMessage.SenderId, expectedMessage.RecipientId, expectedMessage.CreatedAt, expectedMessage.Content, expectedMessage.IsRead, expectedMessage.IsReceived, expectedMessage.MediaId))
+		WillReturnRows(sqlmock.NewRows([]string{"message_id", "sender_id", "recipient_id", "content", "created_at", "status", "media_id"}).
+			AddRow(expectedMessage.MessageId, expectedMessage.SenderId, expectedMessage.RecipientId, expectedMessage.Content, expectedMessage.CreatedAt, expectedMessage.Status, expectedMessage.MediaId))
 
 	messages, err := messageRepo.GetMessagesByUserId(context.Background(), expectedMessage.SenderId)
 	assert.NoError(t, err)
@@ -73,13 +80,20 @@ func TestGetMessagesByUserId_NotFound(t *testing.T) {
 
 	messageRepo := repository.NewMessageRepo(db)
 
-	mock.ExpectQuery(`SELECT message_id, sender_id, recipient_id, created_at, content, is_read, is_received, media_id FROM messages m WHERE m.sender_id = \$1 OR m.recipient_id = \$1 ORDER BY m.message_id ASC LIMIT 100`).
+	mock.ExpectQuery(`SELECT 
+			message_id, 
+			sender_id,
+			recipient_id, 
+			content,
+			created_at, 
+			status,
+			media_id
+		FROM messages m WHERE m.sender_id = \$1 OR m.recipient_id = \$1 ORDER BY m.message_id ASC LIMIT 100`).
 		WithArgs(int64(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"message_id", "sender_id", "recipient_id", "created_at", "content", "is_read", "is_received", "media_id"}))
+		WillReturnRows(sqlmock.NewRows([]string{"message_id", "sender_id", "recipient_id", "content", "created_at", "status", "media_id"}))
 
 	messages, err := messageRepo.GetMessagesByUserId(context.Background(), int64(1))
-	assert.Error(t, err)
-	assert.Equal(t, domain.ErrNotFound, err)
+	assert.NoError(t, err)
 	assert.Empty(t, messages)
 }
 
@@ -94,12 +108,12 @@ func TestCreateMessage_Error(t *testing.T) {
 		SenderId:    1,
 		RecipientId: 2,
 		Content:     "Hello, World!",
-		IsRead:      false,
-		IsReceived:  false,
+		Status:      domain.MessageStatusSent,
+		CreatedAt:   time.Now(),
 	}
 
 	mock.ExpectQuery(`INSERT INTO messages`).
-		WithArgs(message.SenderId, message.RecipientId, message.Content, message.IsRead, message.IsReceived).
+		WithArgs(message.SenderId, message.RecipientId, message.Content, message.Status).
 		WillReturnError(sql.ErrConnDone)
 
 	messageID, err := messageRepo.CreateMessage(context.Background(), message)

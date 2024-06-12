@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
 
 	"github.com/ed16/messenger/domain"
 )
@@ -26,9 +25,7 @@ func (m *UserRepository) CreateUser(ctx context.Context, user *domain.User) erro
 		RETURNING user_id
 	`
 
-	statusStr := strconv.Itoa(int(user.Status))
-
-	err := m.DB.QueryRowContext(ctx, query, user.Username, statusStr, user.CreatedAt, user.PasswordHash).Scan(&user.UserId)
+	err := m.DB.QueryRowContext(ctx, query, user.Username, user.Status, user.CreatedAt, user.PasswordHash).Scan(&user.UserId)
 	if err != nil {
 		return fmt.Errorf("error while creating a new user: %w", err)
 	}
@@ -42,9 +39,8 @@ func (m *UserRepository) UpdateUser(ctx context.Context, user *domain.User) erro
 		SET username = $1, status = $2, created_at = $3, password_hash = $4
 		WHERE user_id = $5
 	`
-	statusStr := strconv.Itoa(int(user.Status))
 
-	_, err := m.DB.ExecContext(ctx, query, user.Username, statusStr, user.CreatedAt, user.PasswordHash, user.UserId)
+	_, err := m.DB.ExecContext(ctx, query, user.Username, user.Status, user.CreatedAt, user.PasswordHash, user.UserId)
 	if err != nil {
 		return err
 	}
@@ -60,32 +56,26 @@ func (m *UserRepository) GetUserByID(ctx context.Context, userID int64) (domain.
 	`
 
 	var user domain.User
-	var statusStr string
-	err := m.DB.QueryRowContext(ctx, query, userID).Scan(&user.UserId, &user.Username, &statusStr, &user.CreatedAt, &user.PasswordHash)
+	err := m.DB.QueryRowContext(ctx, query, userID).Scan(&user.UserId, &user.Username, &user.Status, &user.CreatedAt, &user.PasswordHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return domain.User{}, fmt.Errorf("user not found")
 		}
 		return domain.User{}, err
 	}
-	statusInt, err := strconv.Atoi(statusStr)
-	if err != nil {
-		return domain.User{}, fmt.Errorf("Error converting string user status to int: %v", err)
-	}
-	user.Status = byte(statusInt)
 
 	return user, nil
 }
 
 func (m *UserRepository) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
 	query := `
-		SELECT user_id, username, password_hash
+		SELECT user_id, username, status, password_hash
 		FROM users
-		WHERE username = $1 and status = '1'
+		WHERE username = $1 AND status = $2
 	`
 
 	var user domain.User
-	err := m.DB.QueryRowContext(ctx, query, username).Scan(&user.UserId, &user.Username, &user.PasswordHash)
+	err := m.DB.QueryRowContext(ctx, query, username, domain.UserStatusActive).Scan(&user.UserId, &user.Username, &user.Status, &user.PasswordHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return domain.User{}, domain.ErrNotFound
@@ -96,16 +86,15 @@ func (m *UserRepository) GetUserByUsername(ctx context.Context, username string)
 	return user, nil
 }
 
-// GetUsersByUsername makes search with the like condition <*username*> Status = 0
 func (m *UserRepository) GetUsersByUsername(ctx context.Context, username string) ([]domain.User, error) {
 	query := `
 		SELECT user_id, username
 		FROM users
-		WHERE username LIKE '%' || $1 || '%' and status = '1'
+		WHERE username LIKE '%' || $1 || '%' AND status = $2
 		LIMIT 100
 	`
 
-	rows, err := m.DB.QueryContext(ctx, query, username)
+	rows, err := m.DB.QueryContext(ctx, query, username, domain.UserStatusActive)
 	if err != nil {
 		return nil, err
 	}

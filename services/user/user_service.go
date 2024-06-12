@@ -37,7 +37,7 @@ func (s *UserService) CreateUser(ctx context.Context, username, password string)
 		return err
 	}
 	user.PasswordHash = passwordHash
-	user.Status = 1 // TODO: Implement status schema
+	user.Status = domain.UserStatusActive
 
 	return s.userRepo.CreateUser(ctx, user)
 }

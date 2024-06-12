@@ -2,7 +2,6 @@ package repository_test
 
 import (
 	"context"
-	"strconv"
 	"testing"
 	"time"
 
@@ -21,13 +20,13 @@ func TestCreateUser(t *testing.T) {
 
 	user := &domain.User{
 		Username:     "testuser",
-		Status:       1,
+		Status:       domain.UserStatusActive,
 		CreatedAt:    time.Now(),
 		PasswordHash: "hashedpassword",
 	}
 
 	mock.ExpectQuery(`INSERT INTO users`).
-		WithArgs(user.Username, strconv.Itoa(int(user.Status)), user.CreatedAt, user.PasswordHash).
+		WithArgs(user.Username, user.Status, user.CreatedAt, user.PasswordHash).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow(1))
 
 	err = userRepo.CreateUser(context.Background(), user)
@@ -45,13 +44,13 @@ func TestUpdateUser(t *testing.T) {
 	user := &domain.User{
 		UserId:       1,
 		Username:     "testuser",
-		Status:       1,
+		Status:       domain.UserStatusActive,
 		CreatedAt:    time.Now(),
 		PasswordHash: "hashedpassword",
 	}
 
 	mock.ExpectExec(`UPDATE users`).
-		WithArgs(user.Username, strconv.Itoa(int(user.Status)), user.CreatedAt, user.PasswordHash, user.UserId).
+		WithArgs(user.Username, user.Status, user.CreatedAt, user.PasswordHash, user.UserId).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err = userRepo.UpdateUser(context.Background(), user)
@@ -68,7 +67,7 @@ func TestGetUserByID(t *testing.T) {
 	expectedUser := domain.User{
 		UserId:       1,
 		Username:     "testuser",
-		Status:       1,
+		Status:       domain.UserStatusActive,
 		CreatedAt:    time.Now(),
 		PasswordHash: "hashedpassword",
 	}
@@ -93,13 +92,14 @@ func TestGetUserByUsername(t *testing.T) {
 	expectedUser := domain.User{
 		UserId:       1,
 		Username:     "testuser",
+		Status:       domain.UserStatusActive,
 		PasswordHash: "hashedpassword",
 	}
 
-	mock.ExpectQuery(`SELECT user_id, username, password_hash FROM users WHERE username = \$1`).
+	mock.ExpectQuery(`SELECT user_id, username, status, password_hash FROM users WHERE username = \$1`).
 		WithArgs(expectedUser.Username).
-		WillReturnRows(sqlmock.NewRows([]string{"user_id", "username", "password_hash"}).
-			AddRow(expectedUser.UserId, expectedUser.Username, expectedUser.PasswordHash))
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "username", "status", "password_hash"}).
+			AddRow(expectedUser.UserId, expectedUser.Username, expectedUser.Status, expectedUser.PasswordHash))
 
 	user, err := userRepo.GetUserByUsername(context.Background(), expectedUser.Username)
 	assert.NoError(t, err)
@@ -116,10 +116,11 @@ func TestGetUsersByUsername(t *testing.T) {
 	expectedUser := domain.User{
 		UserId:   1,
 		Username: "testuser",
+		Status:   domain.UserStatusActive,
 	}
 
-	mock.ExpectQuery(`SELECT user_id, username FROM users WHERE username LIKE '%' \|\| \$1 \|\| '%' and status = '1' LIMIT 100`).
-		WithArgs(expectedUser.Username).
+	mock.ExpectQuery(`SELECT user_id, username FROM users WHERE username LIKE '%' || \$1 || '%' AND status = \$2 LIMIT 100`).
+		WithArgs(expectedUser.Username, domain.UserStatusActive).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id", "username"}).
 			AddRow(expectedUser.UserId, expectedUser.Username))
 

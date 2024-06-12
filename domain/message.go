@@ -1,6 +1,16 @@
 package domain
 
-import "time"
+import (
+	"time"
+)
+
+type MessageStatus string
+
+const (
+	MessageStatusSent     MessageStatus = "sent"
+	MessageStatusReceived MessageStatus = "received"
+	MessageStatusRead     MessageStatus = "read"
+)
 
 type Message struct {
 	MessageId   int64
@@ -8,7 +18,6 @@ type Message struct {
 	RecipientId int64
 	Content     string
 	CreatedAt   time.Time
-	IsRead      bool
-	IsReceived  bool
 	MediaId     *int64
+	Status      MessageStatus
 }

@@ -17,38 +17,37 @@ func NewMessageRepo(db *sql.DB) *MessageRepository {
 	}
 }
 
-func (m *MessageRepository) CreateMessage(ctx context.Context, message *domain.Message) (message_id int64, err error) {
+func (m *MessageRepository) CreateMessage(ctx context.Context, message *domain.Message) (messageId int64, err error) {
 	query := `
-		INSERT INTO messages (sender_id, recipient_id, content, is_read, is_received)
+		INSERT INTO messages (sender_id, recipient_id, content, status)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING message_id
 	`
 
-	err = m.DB.QueryRowContext(ctx, query, message.SenderId, message.RecipientId, message.Content, message.IsRead, message.IsReceived).Scan(&message_id)
+	err = m.DB.QueryRowContext(ctx, query, message.SenderId, message.RecipientId, message.Content, message.Status).Scan(&messageId)
 	if err != nil {
 		return 0, err
 	}
 
-	return message_id, nil
+	return messageId, nil
 }
 
-func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, user_id int64) ([]domain.Message, error) {
+func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, userId int64) ([]domain.Message, error) {
 	query := `
 	SELECT 
 		message_id, 
 		sender_id,
 		recipient_id, 
-		created_at, 
 		content,
-		is_read,
-		is_received,
+		created_at, 
+		status,
 		media_id
 	FROM messages m
 	WHERE m.sender_id = $1 OR m.recipient_id = $1
 	ORDER BY m.message_id ASC
 	LIMIT 100;`
 
-	rows, err := m.DB.QueryContext(ctx, query, user_id)
+	rows, err := m.DB.QueryContext(ctx, query, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +57,7 @@ func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, user_id int
 	for rows.Next() {
 		var message domain.Message
 		err := rows.Scan(&message.MessageId, &message.SenderId, &message.RecipientId, &message.CreatedAt,
-			&message.Content, &message.IsRead, &message.IsReceived, &message.MediaId)
+			&message.Content, &message.Status, &message.MediaId)
 		if err != nil {
 			return nil, err
 		}

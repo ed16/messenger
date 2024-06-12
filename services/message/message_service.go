@@ -27,8 +27,7 @@ func (s *MessageService) CreateMessage(ctx context.Context, senderId, recipientI
 	message.SenderId = senderId
 	message.RecipientId = recipientId
 	message.Content = content
-	message.IsRead = false
-	message.IsReceived = false
+	message.Status = domain.MessageStatusSent
 	messageId, err = s.MessageRepo.CreateMessage(ctx, message)
 	return
 }

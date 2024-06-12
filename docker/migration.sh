@@ -29,10 +29,11 @@ TABLE_EXISTS=$(psql -h $DB_HOST -U $DB_USER -d $DB_NAME -tc "SELECT 1 FROM infor
 if [ "$TABLE_EXISTS" != "1" ]; then
   echo "Table 'users' does not exist. Creating..."
   psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+  CREATE TYPE user_status AS ENUM ('active', 'deleted', 'blocked');
   CREATE TABLE users (
     user_id BIGSERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
-    status VARCHAR(1),
+    status user_status, -- Use the enum type here
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     password_hash CHAR(60) -- CHAR(60) is suitable for bcrypt hashes
   );"
@@ -48,8 +49,8 @@ if [ "$TABLE_EXISTS" != "1" ]; then
   echo "Table 'contacts' does not exist. Creating..."
   psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
   CREATE TABLE contacts (
-    user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    contact_user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    contact_user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     PRIMARY KEY (user_id, contact_user_id)
   );"
@@ -71,8 +72,8 @@ if [ "$TABLE_EXISTS" != "1" ]; then
   psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
   CREATE TABLE media (
     media_id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    file_path TEXT NOT NULL,
+    user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    file_path VARCHAR(260) NOT NULL,
     file_type VARCHAR(50) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
   );"
@@ -92,17 +93,17 @@ TABLE_EXISTS=$(psql -h $DB_HOST -U $DB_USER -d $DB_NAME -tAc "SELECT 1 FROM info
 if [ "$TABLE_EXISTS" != "1" ]; then
   echo "Table 'messages' does not exist. Creating..."
   psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+  CREATE TYPE message_status AS ENUM ('sent', 'received', 'read');
   CREATE TABLE messages (
       message_id BIGSERIAL PRIMARY KEY,
-      sender_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-      recipient_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-      content TEXT NOT NULL,
+      sender_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+      recipient_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+      content VARCHAR(1000) NOT NULL,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-      is_read BOOLEAN DEFAULT FALSE,
-      is_received BOOLEAN DEFAULT FALSE,
+      status message_status
       media_id BIGINT,
-      CONSTRAINT fk_media FOREIGN KEY (media_id) REFERENCES media(media_id) ON DELETE SET NULL
-  );"
+      CONSTRAINT fk_media FOREIGN KEY (media_id) REFERENCES media(media_id) ON DELETE RESTRICT
+  );
 
   # Create index for quick retrieval of all messages for a specific user
   psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
@@ -116,7 +117,7 @@ fi
 # Upsert the admin user record
 USERNAME="admin"
 PASSWORD_HASH="\$2a\$10\$p7X62PHGUAGFnhdBDLFjs.ufDZY.59FbWlrBi1PxG4OKlHEb.lTVO"
-STATUS="1"
+STATUS="active"
 
 echo "Upserting user $USERNAME..."
 psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
