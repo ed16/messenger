@@ -1,7 +1,24 @@
-FROM golang:1.22.3
+# Dockerfile.auth
+FROM golang:1.22.3 AS builder
 
 WORKDIR /app
-COPY . .
 
-RUN go build -o auth_service ./cmd/auth_service
+# Cache dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the source code and build the binary
+COPY cmd ./cmd
+COPY domain ./domain
+COPY internal ./internal
+COPY services ./services
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o auth_service ./cmd/auth_service
+
+# Use a minimal base image for the final stage
+FROM alpine:3.20.1
+
+WORKDIR /app
+
+# Copy the Pre-built binary file from the previous stage
+COPY --from=builder /app/auth_service /app/
 CMD ["./auth_service"]

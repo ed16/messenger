@@ -69,6 +69,7 @@ services:
       - "5432:${POSTGRES_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./migrations/init-db.sql.template:/docker-entrypoint-initdb.d/init-db.sql.template
     networks:
       - messenger-network
 
