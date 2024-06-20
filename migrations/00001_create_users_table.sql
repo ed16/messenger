@@ -6,7 +6,7 @@ CREATE TABLE users (
     username VARCHAR(255) UNIQUE NOT NULL,
     status user_status,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    password_hash CHAR(255)
+    password_hash CHAR(60)
 );
 -- +goose StatementEnd
 
