@@ -33,6 +33,17 @@ func (m *MessageRepository) CreateMessage(ctx context.Context, message *domain.M
 }
 
 func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, userId int64) ([]domain.Message, error) {
+	countQuery := `
+	SELECT COUNT(*)
+	FROM messages m
+	WHERE m.sender_id = $1 OR m.recipient_id = $1;`
+
+	var count int
+	err := m.DB.QueryRowContext(ctx, countQuery, userId).Scan(&count)
+	if err != nil {
+		return nil, err
+	}
+
 	query := `
 	SELECT 
 		message_id, 
@@ -53,7 +64,8 @@ func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, userId int6
 	}
 	defer rows.Close()
 
-	var messages []domain.Message
+	// Initialize the slice with the exact capacity
+	messages := make([]domain.Message, 0, count)
 	for rows.Next() {
 		var message domain.Message
 		err := rows.Scan(&message.MessageId, &message.SenderId, &message.RecipientId, &message.CreatedAt,
@@ -66,9 +78,6 @@ func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, userId int6
 
 	if err = rows.Err(); err != nil {
 		return nil, err
-	}
-	if len(messages) == 0 {
-		return messages, domain.ErrNotFound
 	}
 
 	return messages, nil
