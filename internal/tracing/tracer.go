@@ -17,7 +17,7 @@ import (
 func InitTracer() func() {
 	serviceName := os.Getenv("OTEL_SERVICE_NAME")
 	otlpEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
-	log.Printf("Initializing tracer for service: %s", serviceName)
+
 	ctx := context.Background()
 
 	// Create the OTLP exporter
