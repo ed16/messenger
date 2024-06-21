@@ -19,3 +19,4 @@ done
 
 # Run the goose migrations
 goose -dir /migrations postgres "host=$DB_HOST port=$DB_PORT user=$DB_USER password=$DB_PASS dbname=$DB_NAME sslmode=disable" up
+echo "--- Messenger is now ready for you. Enjoy and have fun! ---"
