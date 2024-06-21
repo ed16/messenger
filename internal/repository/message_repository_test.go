@@ -54,6 +54,11 @@ func TestGetMessagesByUserId(t *testing.T) {
 		MediaId:     &mediaID,
 	}
 
+	mock.ExpectQuery(`SELECT COUNT\(\*\)
+	FROM messages m WHERE m.sender_id = \$1 OR m.recipient_id = \$1`).
+		WithArgs(expectedMessage.SenderId).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
 	mock.ExpectQuery(`SELECT 
 			message_id, 
 			sender_id,
@@ -79,6 +84,11 @@ func TestGetMessagesByUserId_NotFound(t *testing.T) {
 	defer db.Close()
 
 	messageRepo := repository.NewMessageRepo(db)
+
+	mock.ExpectQuery(`SELECT COUNT\(\*\)
+	FROM messages m WHERE m.sender_id = \$1 OR m.recipient_id = \$1`).
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
 	mock.ExpectQuery(`SELECT 
 			message_id, 

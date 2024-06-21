@@ -20,7 +20,7 @@ func NewMessageRepo(db *sql.DB) *MessageRepository {
 func (m *MessageRepository) CreateMessage(ctx context.Context, message *domain.Message) (messageId int64, err error) {
 	query := `
 		INSERT INTO messages (sender_id, recipient_id, content, status)
-		VALUES ($1, $2, $3, $4, $5)
+		VALUES ($1, $2, $3, $4)
 		RETURNING message_id
 	`
 
@@ -64,12 +64,10 @@ func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, userId int6
 	}
 	defer rows.Close()
 
-	// Initialize the slice with the exact capacity
 	messages := make([]domain.Message, 0, count)
 	for rows.Next() {
 		var message domain.Message
-		err := rows.Scan(&message.MessageId, &message.SenderId, &message.RecipientId, &message.CreatedAt,
-			&message.Content, &message.Status, &message.MediaId)
+		err := rows.Scan(&message.MessageId, &message.SenderId, &message.RecipientId, &message.Content, &message.CreatedAt, &message.Status, &message.MediaId)
 		if err != nil {
 			return nil, err
 		}
