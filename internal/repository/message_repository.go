@@ -17,48 +17,57 @@ func NewMessageRepo(db *sql.DB) *MessageRepository {
 	}
 }
 
-func (m *MessageRepository) CreateMessage(ctx context.Context, message *domain.Message) (message_id int64, err error) {
+func (m *MessageRepository) CreateMessage(ctx context.Context, message *domain.Message) (messageId int64, err error) {
 	query := `
-		INSERT INTO messages (sender_id, recipient_id, content, is_read, is_received)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO messages (sender_id, recipient_id, content, status)
+		VALUES ($1, $2, $3, $4)
 		RETURNING message_id
 	`
 
-	err = m.DB.QueryRowContext(ctx, query, message.SenderId, message.RecipientId, message.Content, message.IsRead, message.IsReceived).Scan(&message_id)
+	err = m.DB.QueryRowContext(ctx, query, message.SenderId, message.RecipientId, message.Content, message.Status).Scan(&messageId)
 	if err != nil {
 		return 0, err
 	}
 
-	return message_id, nil
+	return messageId, nil
 }
 
-func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, user_id int64) ([]domain.Message, error) {
+func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, userId int64) ([]domain.Message, error) {
+	countQuery := `
+	SELECT COUNT(*)
+	FROM messages m
+	WHERE m.sender_id = $1 OR m.recipient_id = $1;`
+
+	var count int
+	err := m.DB.QueryRowContext(ctx, countQuery, userId).Scan(&count)
+	if err != nil {
+		return nil, err
+	}
+
 	query := `
 	SELECT 
 		message_id, 
 		sender_id,
 		recipient_id, 
-		created_at, 
 		content,
-		is_read,
-		is_received,
+		created_at, 
+		status,
 		media_id
 	FROM messages m
 	WHERE m.sender_id = $1 OR m.recipient_id = $1
 	ORDER BY m.message_id ASC
 	LIMIT 100;`
 
-	rows, err := m.DB.QueryContext(ctx, query, user_id)
+	rows, err := m.DB.QueryContext(ctx, query, userId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var messages []domain.Message
+	messages := make([]domain.Message, 0, count)
 	for rows.Next() {
 		var message domain.Message
-		err := rows.Scan(&message.MessageId, &message.SenderId, &message.RecipientId, &message.CreatedAt,
-			&message.Content, &message.IsRead, &message.IsReceived, &message.MediaId)
+		err := rows.Scan(&message.MessageId, &message.SenderId, &message.RecipientId, &message.Content, &message.CreatedAt, &message.Status, &message.MediaId)
 		if err != nil {
 			return nil, err
 		}
@@ -67,9 +76,6 @@ func (m *MessageRepository) GetMessagesByUserId(ctx context.Context, user_id int
 
 	if err = rows.Err(); err != nil {
 		return nil, err
-	}
-	if len(messages) == 0 {
-		return messages, domain.ErrNotFound
 	}
 
 	return messages, nil

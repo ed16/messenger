@@ -4,12 +4,13 @@ services:
       context: .
       dockerfile: docker/Dockerfile.auth
     environment:
-      - EXAMPLE_VAR=5
+      - OTEL_SERVICE_NAME=auth
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4318
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
+      - POSTGRES_PORT=${POSTGRES_PORT}
     networks:
       - messenger-network
     depends_on:
@@ -20,12 +21,13 @@ services:
       context: .
       dockerfile: docker/Dockerfile.user
     environment:
-      - EXAMPLE_VAR=5
+      - OTEL_SERVICE_NAME=user
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4318
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
+      - POSTGRES_PORT=${POSTGRES_PORT}
     networks:
       - messenger-network
     depends_on:
@@ -36,12 +38,13 @@ services:
       context: .
       dockerfile: docker/Dockerfile.message
     environment:
-      - EXAMPLE_VAR=5
+      - OTEL_SERVICE_NAME=message
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4318
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
+      - POSTGRES_PORT=${POSTGRES_PORT}
     networks:
       - messenger-network
     depends_on:
@@ -66,9 +69,29 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5432:${POSTGRES_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./migrations/init-db.sql.template:/docker-entrypoint-initdb.d/init-db.sql.template
+    networks:
+      - messenger-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "14269:14269"
+      - "4317:4317"
+      - "4318:4318"
+      - "9411:9411"
+    volumes:
+      - jaeger_data:/data
     networks:
       - messenger-network
 
@@ -78,4 +101,6 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  jaeger_data:
     driver: local

@@ -64,3 +64,8 @@ The API endpoints provided by the services can be accessed through HTTP requests
 - `/messages/user/{userId}/file`: Send a media file to a user.
 - `/messages/group/{groupId}/file`: Send a media file to a group.
 - `/messages/file`: Retrieve media files from messages.
+
+## Tracing and Monitoring
+
+### Jaeger
+Jaeger is available at the following link: http://localhost:16686/

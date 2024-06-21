@@ -18,15 +18,15 @@ type CreateMessageResponse struct {
 }
 
 type MessageService interface {
-	CreateMessage(ctx context.Context, sender_id, recipient_id int64, content string) (message_id int64, err error)
-	GetMessagesByUserId(ctx context.Context, user_id int64) ([]domain.Message, error)
+	CreateMessage(ctx context.Context, senderId, recipientId int64, content string) (messageId int64, err error)
+	GetMessagesByUserId(ctx context.Context, userId int64) ([]domain.Message, error)
 }
 
 func CreateMessageHandler(service MessageService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		recipient_id_str := r.PathValue("user_id")
+		recipientIdStr := r.PathValue("user_id")
 		// Validate request
-		if recipient_id_str == "" {
+		if recipientIdStr == "" {
 			http.Error(w, "userId query parameter is required", http.StatusBadRequest)
 			return
 		}
@@ -38,28 +38,28 @@ func CreateMessageHandler(service MessageService) http.HandlerFunc {
 			return
 		}
 		defer r.Body.Close()
-		sender_id_str := r.Header.Get("User-Id")
-		sender_id, err := strconv.ParseInt(sender_id_str, 10, 64)
+		senderIdStr := r.Header.Get("User-Id")
+		senderId, err := strconv.ParseInt(senderIdStr, 10, 64)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Sending message failed", http.StatusInternalServerError)
 			return
 		}
-		recipient_id, err := strconv.ParseInt(recipient_id_str, 10, 64)
+		recipientId, err := strconv.ParseInt(recipientIdStr, 10, 64)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Sending message failed", http.StatusInternalServerError)
 			return
 		}
 
-		message_id, err := service.CreateMessage(r.Context(), sender_id, recipient_id, req.Content)
+		messageId, err := service.CreateMessage(r.Context(), senderId, recipientId, req.Content)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Sending message failed", getStatusCode(err))
 			return
 		}
-		message_id_str := strconv.Itoa(int(message_id))
-		resp := CreateMessageResponse{MessageId: message_id_str}
+		messageIdStr := strconv.Itoa(int(messageId))
+		resp := CreateMessageResponse{MessageId: messageIdStr}
 
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
@@ -75,15 +75,15 @@ func CreateMessageHandler(service MessageService) http.HandlerFunc {
 
 func GetMessagesHandler(service MessageService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user_id_str := r.Header.Get("User-Id")
-		user_id, err := strconv.ParseInt(user_id_str, 10, 64)
+		userIdStr := r.Header.Get("User-Id")
+		userId, err := strconv.ParseInt(userIdStr, 10, 64)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Getting messages failed", http.StatusInternalServerError)
 			return
 		}
 
-		users, err := service.GetMessagesByUserId(r.Context(), user_id)
+		users, err := service.GetMessagesByUserId(r.Context(), userId)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Failed to retrieve messages", getStatusCode(err))

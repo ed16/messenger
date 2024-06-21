@@ -60,8 +60,8 @@ func (m *MockMessageRepository) CreateMessage(ctx context.Context, msg *domain.M
 	return args.Get(0).(int64), args.Error(1)
 }
 
-func (m *MockMessageRepository) GetMessagesByUserId(ctx context.Context, user_id int64) ([]domain.Message, error) {
-	args := m.Called(ctx, user_id)
+func (m *MockMessageRepository) GetMessagesByUserId(ctx context.Context, userId int64) ([]domain.Message, error) {
+	args := m.Called(ctx, userId)
 	if args.Get(0) != nil {
 		return args.Get(0).([]domain.Message), args.Error(1)
 	}

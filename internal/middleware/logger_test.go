@@ -17,7 +17,7 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write([]byte("Hello, World!"))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
