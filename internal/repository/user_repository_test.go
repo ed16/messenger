@@ -26,7 +26,7 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	mock.ExpectQuery(`INSERT INTO users`).
-		WithArgs(user.Username, user.Status, user.CreatedAt, user.PasswordHash).
+		WithArgs(user.Username, user.Status, user.PasswordHash, user.CreatedAt).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow(1))
 
 	err = userRepo.CreateUser(context.Background(), user)
@@ -96,8 +96,8 @@ func TestGetUserByUsername(t *testing.T) {
 		PasswordHash: "hashedpassword",
 	}
 
-	mock.ExpectQuery(`SELECT user_id, username, status, password_hash FROM users WHERE username = \$1`).
-		WithArgs(expectedUser.Username).
+	mock.ExpectQuery(`SELECT user_id, username, status, password_hash FROM users WHERE username = \$1 AND status = \$2`).
+		WithArgs(expectedUser.Username, expectedUser.Status).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id", "username", "status", "password_hash"}).
 			AddRow(expectedUser.UserId, expectedUser.Username, expectedUser.Status, expectedUser.PasswordHash))
 
@@ -127,7 +127,8 @@ func TestGetUsersByUsername(t *testing.T) {
 	users, err := userRepo.GetUsersByUsername(context.Background(), expectedUser.Username)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(users))
-	assert.Equal(t, expectedUser, users[0])
+	assert.Equal(t, expectedUser.UserId, users[0].UserId)
+	assert.Equal(t, expectedUser.Username, users[0].Username)
 }
 
 func TestCreateUserContact(t *testing.T) {

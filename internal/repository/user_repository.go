@@ -20,12 +20,12 @@ func NewUserRepo(db *sql.DB) *UserRepository {
 
 func (m *UserRepository) CreateUser(ctx context.Context, user *domain.User) error {
 	query := `
-		INSERT INTO users (username, status, created_at, password_hash)
+		INSERT INTO users (username, status, password_hash, created_at)
 		VALUES ($1, $2, $3, $4)
 		RETURNING user_id
 	`
 
-	err := m.DB.QueryRowContext(ctx, query, user.Username, user.Status, user.CreatedAt, user.PasswordHash).Scan(&user.UserId)
+	err := m.DB.QueryRowContext(ctx, query, user.Username, user.Status, user.PasswordHash, user.CreatedAt).Scan(&user.UserId)
 	if err != nil {
 		return fmt.Errorf("error while creating a new user: %w", err)
 	}
