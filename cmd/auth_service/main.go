@@ -6,59 +6,76 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ed16/messenger/internal/handlers"
 	"github.com/ed16/messenger/internal/middleware"
 	"github.com/ed16/messenger/internal/repository"
+	"github.com/ed16/messenger/internal/tracing"
 	"github.com/ed16/messenger/services/auth"
 )
 
+const serverAddress = ":8080"
+
 func main() {
+
+	cleanup := tracing.InitTracer()
+	defer cleanup()
+
 	dbConn, err := repository.GetPostgresConn()
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to connect to the database: %v", err)
 	}
 	defer func() {
-		err := dbConn.Close()
-		if err != nil {
-			log.Fatal("got error when closing the DB connection", err)
+		if err := dbConn.Close(); err != nil {
+			log.Fatalf("failed to close the database connection: %v", err)
 		}
 	}()
+
 	userRepo := repository.NewUserRepo(dbConn)
 	authService := auth.NewAuthService(userRepo)
 
-	router := http.NewServeMux()
-	router.HandleFunc("POST /auth/login/", handlers.LoginHandler(authService))
-	router.HandleFunc("GET /auth/validate-token", handlers.ValidateTokenHandler(authService)) // Always GET, so that the incoming request's body is not consumed
+	router := setupRouter(authService)
+	tracedRouter := middleware.TraceRequests(router)     // Add tracing middleware
+	loggedRouter := middleware.LogRequests(tracedRouter) // Add logging middleware
 
-	// Wrap the router with a middleware that logs each request
-	server := http.Server{
-		Addr:    ":8080",
-		Handler: middleware.LogRequests(router),
+	server := &http.Server{
+		Addr:    serverAddress,
+		Handler: loggedRouter,
 	}
 
-	// Create a channel to listen for interrupts (SIGINT, SIGTERM)
+	// Handle OS signals for graceful shutdown
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
 	// Start the server in a separate goroutine
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			panic(err)
+			log.Fatalf("ListenAndServe error: %v", err)
 		}
 	}()
 
-	// Wait for an interrupt
+	// Wait for interrupt signal
 	<-stop
+	log.Println("Shutting down server...")
 
-	// Create a context with timeout
+	// Create a context with timeout for graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Shutdown the server
 	if err := server.Shutdown(ctx); err != nil {
-		panic(err)
+		log.Fatalf("Server shutdown failed: %v", err)
 	}
-	// Server gracefully shutdown
+
+	log.Println("Server gracefully stopped")
+}
+
+func setupRouter(authService *auth.AuthService) *http.ServeMux {
+	router := http.NewServeMux()
+
+	router.HandleFunc("POST /auth/login/", handlers.LoginHandler(authService))
+	router.HandleFunc("GET /auth/validate-token", handlers.ValidateTokenHandler(authService)) // Always GET, so that the incoming request's body is not consumed
+
+	return router
 }

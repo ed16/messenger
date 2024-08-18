@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ed16/messenger/domain"
 	"github.com/ed16/messenger/internal/lib/crypto"
@@ -29,15 +30,17 @@ func NewUserService(ur UserRepository) *UserService {
 }
 
 func (s *UserService) CreateUser(ctx context.Context, username, password string) error {
-	user := &domain.User{}
-	user.Username = username
-
 	passwordHash, err := crypto.GetPasswordHash(password)
 	if err != nil {
 		return err
 	}
-	user.PasswordHash = passwordHash
-	user.Status = 1 // TODO: Implement status schema
+
+	user := &domain.User{
+		Username:     username,
+		Status:       domain.UserStatusActive,
+		PasswordHash: passwordHash,
+		CreatedAt:    time.Now(),
+	}
 
 	return s.userRepo.CreateUser(ctx, user)
 }
@@ -58,6 +61,7 @@ func (s *UserService) AddContact(ctx context.Context, userID int64, contactUsern
 	contact := &domain.Contact{
 		UserId:        user.UserId,
 		ContactUserId: contactUser.UserId,
+		CreatedAt:     time.Now(),
 	}
 
 	return s.userRepo.CreateUserContact(ctx, contact)

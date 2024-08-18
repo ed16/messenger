@@ -22,8 +22,7 @@ func TestCreateMessage(t *testing.T) {
 		SenderId:    1,
 		RecipientId: 2,
 		Content:     "Hello, World!",
-		IsRead:      false,
-		IsReceived:  false,
+		Status:      domain.MessageStatusSent,
 	}
 
 	mockRepo.On("CreateMessage", ctx, mock.AnythingOfType("*domain.Message")).Return(messageID, nil)
@@ -43,8 +42,7 @@ func TestCreateMessage_Error(t *testing.T) {
 		SenderId:    1,
 		RecipientId: 2,
 		Content:     "Hello, World!",
-		IsRead:      false,
-		IsReceived:  false,
+		Status:      domain.MessageStatusSent,
 	}
 
 	mockRepo.On("CreateMessage", ctx, mock.AnythingOfType("*domain.Message")).Return(int64(0), errors.New("create message error"))
@@ -66,8 +64,7 @@ func TestGetMessagesByUserId(t *testing.T) {
 			SenderId:    1,
 			RecipientId: 2,
 			Content:     "Hello, World!",
-			IsRead:      false,
-			IsReceived:  false,
+			Status:      domain.MessageStatusSent,
 		},
 	}
 

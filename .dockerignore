@@ -1,0 +1,7 @@
+# Exclude other unnecessary files and directories
+.git
+.github
+.vscode
+.gitignore
+.env
+*.md
